@@ -134,7 +134,7 @@ class Admin {
                         </th>
                         <td>
                             <select name="api_provider" id="api_provider" class="regular-text">
-                                <option value="openai" <?php selected( $api_provider, 'openai' ); ?>>OpenAI (GPT-4)</option>
+                                <option value="openai" <?php selected( $api_provider, 'openai' ); ?>>OpenAI (GPT-4o-mini)</option>
                                 <option value="anthropic" <?php selected( $api_provider, 'anthropic' ); ?>>Anthropic (Claude)</option>
                             </select>
                         </td>

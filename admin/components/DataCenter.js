@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from '@wordpress/element';
-import { Button, Spinner, Notice } from '@wordpress/components';
+import { Button, Spinner, Notice, Modal } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -15,8 +15,10 @@ const DataCenter = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
     const [editingCell, setEditingCell] = useState(null);
     const [generatingAI, setGeneratingAI] = useState(new Set());
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
 
     // Fetch data from API
     const fetchData = async () => {
@@ -110,9 +112,12 @@ const DataCenter = () => {
 
     // Delete row
     const deleteRow = async (rowId) => {
-        if (!confirm(__('Are you sure you want to delete this row?', 'localseo-booster'))) {
-            return;
-        }
+        setDeleteConfirm(rowId);
+    };
+
+    const confirmDelete = async () => {
+        const rowId = deleteConfirm;
+        setDeleteConfirm(null);
 
         try {
             await apiFetch({
@@ -121,6 +126,7 @@ const DataCenter = () => {
             });
             
             setData(prevData => prevData.filter(row => row.id !== rowId));
+            setSuccess(__('Row deleted successfully.', 'localseo-booster'));
         } catch (err) {
             setError(err.message);
         }
@@ -136,7 +142,7 @@ const DataCenter = () => {
                 method: 'POST',
             });
             
-            alert(__(`Generated ${response.success} items. Failed: ${response.failed}`, 'localseo-booster'));
+            setSuccess(__(`Generated ${response.success} items. Failed: ${response.failed}`, 'localseo-booster'));
             fetchData(); // Refresh all data
         } catch (err) {
             setError(err.message);
@@ -366,6 +372,29 @@ const DataCenter = () => {
                 <Notice status="error" isDismissible onRemove={() => setError(null)}>
                     {error}
                 </Notice>
+            )}
+
+            {success && (
+                <Notice status="success" isDismissible onRemove={() => setSuccess(null)}>
+                    {success}
+                </Notice>
+            )}
+
+            {deleteConfirm && (
+                <Modal
+                    title={__('Confirm Delete', 'localseo-booster')}
+                    onRequestClose={() => setDeleteConfirm(null)}
+                >
+                    <p>{__('Are you sure you want to delete this row?', 'localseo-booster')}</p>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                        <Button variant="primary" isDestructive onClick={confirmDelete}>
+                            {__('Delete', 'localseo-booster')}
+                        </Button>
+                        <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>
+                            {__('Cancel', 'localseo-booster')}
+                        </Button>
+                    </div>
+                </Modal>
             )}
 
             <div className="toolbar">

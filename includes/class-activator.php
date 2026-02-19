@@ -27,7 +27,7 @@ class Activator {
         $charset_collate = $wpdb->get_charset_collate();
 
         $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            id bigint unsigned NOT NULL AUTO_INCREMENT,
             city varchar(100) NOT NULL,
             zip varchar(20) DEFAULT '',
             service_keyword varchar(100) NOT NULL,

@@ -15,7 +15,7 @@
 
 3. **Configure Settings**
    - Go to **WordPress Admin > LocalSEO > Settings**
-   - Choose AI Provider (OpenAI or Anthropic)
+   - Choose AI Provider (OpenAI, Anthropic, or Google Gemini)
    - Enter your API key
    - Customize the system prompt (optional)
 

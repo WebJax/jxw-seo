@@ -5,7 +5,7 @@ AI-Powered Programmatic SEO Plugin for WordPress Full Site Editing (FSE) that ge
 ## Features
 
 - 🗂️ **Data Center**: Spreadsheet-like interface for managing SEO data
-- 🤖 **AI Integration**: Generate unique content using OpenAI or Anthropic APIs
+- 🤖 **AI Integration**: Generate unique content using OpenAI, Anthropic, or Google Gemini APIs
 - 🔗 **Virtual Routing**: Create landing pages without cluttering wp_posts
 - 🧩 **Block Bindings**: Seamlessly integrate with FSE templates
 - ⚡ **Performance**: No database bloat, fast virtual page rendering
@@ -14,7 +14,7 @@ AI-Powered Programmatic SEO Plugin for WordPress Full Site Editing (FSE) that ge
 
 - WordPress 6.5+
 - PHP 8.1+
-- OpenAI API key or Anthropic API key (for AI features)
+- OpenAI API key, Anthropic API key, or Google Gemini API key (for AI features)
 
 ## Installation
 
@@ -42,7 +42,7 @@ npm run start
 ### 1. Configure Settings
 
 Navigate to **LocalSEO > Settings** in WordPress admin:
-- Select your AI provider (OpenAI or Anthropic)
+- Select your AI provider (OpenAI, Anthropic, or Google Gemini)
 - Enter your API key
 - Customize the system prompt template
 

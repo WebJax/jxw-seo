@@ -1,0 +1,110 @@
+.localseo-data-center {
+    margin: 20px 0;
+}
+
+.localseo-data-center h1 {
+    margin-bottom: 20px;
+}
+
+.localseo-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.table-container {
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.localseo-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.localseo-table thead {
+    background: #f0f0f1;
+}
+
+.localseo-table th {
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #ccc;
+}
+
+.localseo-table td {
+    padding: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+}
+
+.localseo-table tbody tr:hover {
+    background: #f9f9f9;
+}
+
+.localseo-table input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #8c8f94;
+    border-radius: 2px;
+}
+
+.localseo-table input:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.localseo-table td > div {
+    cursor: pointer;
+    min-height: 20px;
+}
+
+.localseo-table td > div em {
+    color: #8c8f94;
+    font-style: italic;
+}
+
+.localseo-table .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.action-buttons button {
+    white-space: nowrap;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #8c8f94;
+}
+
+.empty-state p {
+    font-size: 16px;
+}
+
+/* WordPress components overrides */
+.components-spinner {
+    margin: 0;
+}

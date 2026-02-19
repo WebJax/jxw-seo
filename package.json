@@ -23,14 +23,14 @@
   "license": "GPL-2.0-or-later",
   "dependencies": {
     "@tanstack/react-table": "^8.20.5",
-    "@wordpress/api-fetch": "^7.9.0",
-    "@wordpress/components": "^28.9.0",
-    "@wordpress/element": "^6.9.0",
-    "@wordpress/i18n": "^5.9.0",
+    "@wordpress/api-fetch": "^7.40.0",
+    "@wordpress/components": "^32.2.0",
+    "@wordpress/element": "^6.40.0",
+    "@wordpress/i18n": "^6.13.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@wordpress/scripts": "^28.9.0"
+    "@wordpress/scripts": "^31.5.0"
   }
 }

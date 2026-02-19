@@ -87,7 +87,7 @@ class Admin {
                 'apiUrl' => rest_url( 'localseo/v1' ),
                 'nonce' => wp_create_nonce( 'wp_rest' ),
                 'settings' => [
-                    'apiKey' => get_option( 'localseo_api_key', '' ),
+                    'hasApiKey' => ! empty( get_option( 'localseo_api_key', '' ) ),
                     'apiProvider' => get_option( 'localseo_api_provider', 'openai' ),
                     'systemPrompt' => get_option( 'localseo_system_prompt', '' ),
                 ]
@@ -109,6 +109,11 @@ class Admin {
         // Handle form submission
         if ( isset( $_POST['localseo_settings_nonce'] ) && 
              wp_verify_nonce( $_POST['localseo_settings_nonce'], 'localseo_settings' ) ) {
+            
+            // Verify user has capability to manage options
+            if ( ! current_user_can( 'manage_options' ) ) {
+                wp_die( __( 'You do not have sufficient permissions to access this page.', 'localseo-booster' ) );
+            }
             
             update_option( 'localseo_api_key', sanitize_text_field( $_POST['api_key'] ?? '' ) );
             update_option( 'localseo_api_provider', sanitize_text_field( $_POST['api_provider'] ?? 'openai' ) );
@@ -136,6 +141,7 @@ class Admin {
                             <select name="api_provider" id="api_provider" class="regular-text">
                                 <option value="openai" <?php selected( $api_provider, 'openai' ); ?>>OpenAI (GPT-4o-mini)</option>
                                 <option value="anthropic" <?php selected( $api_provider, 'anthropic' ); ?>>Anthropic (Claude)</option>
+                                <option value="gemini" <?php selected( $api_provider, 'gemini' ); ?>>Google Gemini</option>
                             </select>
                         </td>
                     </tr>

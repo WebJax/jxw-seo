@@ -31,7 +31,7 @@ class Activator {
             city varchar(100) NOT NULL,
             zip varchar(20) DEFAULT '',
             service_keyword varchar(100) NOT NULL,
-            custom_slug varchar(200) DEFAULT '',
+            custom_slug varchar(200) DEFAULT NULL,
             ai_generated_intro text DEFAULT '',
             meta_title varchar(255) DEFAULT '',
             meta_description varchar(500) DEFAULT '',

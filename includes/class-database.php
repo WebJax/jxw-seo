@@ -22,6 +22,7 @@ class Database {
      */
     public function get_all() {
         global $wpdb;
+        // Table name is safe - it's set in constructor from wpdb->prefix which is controlled by WordPress core
         return $wpdb->get_results( "SELECT * FROM {$this->table_name} ORDER BY id DESC" );
     }
 
@@ -80,7 +81,17 @@ class Database {
 
         // Generate slug if not provided
         if ( empty( $data['custom_slug'] ) && ! empty( $data['service_keyword'] ) && ! empty( $data['city'] ) ) {
-            $data['custom_slug'] = sanitize_title( $data['service_keyword'] . '-' . $data['city'] );
+            $base_slug = sanitize_title( $data['service_keyword'] . '-' . $data['city'] );
+            $slug = $base_slug;
+            $counter = 1;
+            
+            // Check for duplicate slugs and append number if needed
+            while ( $this->get_by_slug( $slug ) ) {
+                $slug = $base_slug . '-' . $counter;
+                $counter++;
+            }
+            
+            $data['custom_slug'] = $slug;
         }
 
         $inserted = $wpdb->insert(

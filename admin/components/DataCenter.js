@@ -19,6 +19,7 @@ const DataCenter = () => {
     const [editingCell, setEditingCell] = useState(null);
     const [generatingAI, setGeneratingAI] = useState(new Set());
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [bulkProgress, setBulkProgress] = useState(null);
 
     // Fetch data from API
     const fetchData = async () => {
@@ -134,21 +135,57 @@ const DataCenter = () => {
 
     // Bulk generate AI
     const bulkGenerateAI = async () => {
-        setLoading(true);
+        const rowsNeedingAI = data.filter(row => 
+            !row.ai_generated_intro || !row.meta_title || !row.meta_description
+        );
         
-        try {
-            const response = await apiFetch({
-                path: '/localseo/v1/generate-ai-bulk',
-                method: 'POST',
-            });
-            
-            setSuccess(__(`Generated ${response.success} items. Failed: ${response.failed}`, 'localseo-booster'));
-            fetchData(); // Refresh all data
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
+        if (rowsNeedingAI.length === 0) {
+            setError(__('No rows need AI generation.', 'localseo-booster'));
+            return;
         }
+        
+        setBulkProgress({ current: 0, total: rowsNeedingAI.length, success: 0, failed: 0 });
+        
+        for (let i = 0; i < rowsNeedingAI.length; i++) {
+            const row = rowsNeedingAI[i];
+            
+            try {
+                const response = await apiFetch({
+                    path: `/localseo/v1/generate-ai/${row.id}`,
+                    method: 'POST',
+                });
+                
+                // Update local state with AI-generated content
+                setData(prevData =>
+                    prevData.map(r =>
+                        r.id === row.id ? response : r
+                    )
+                );
+                
+                setBulkProgress(prev => ({
+                    ...prev,
+                    current: i + 1,
+                    success: prev.success + 1
+                }));
+                
+                // Add delay to avoid rate limiting
+                if (i < rowsNeedingAI.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            } catch (err) {
+                setBulkProgress(prev => ({
+                    ...prev,
+                    current: i + 1,
+                    failed: prev.failed + 1
+                }));
+            }
+        }
+        
+        const finalProgress = bulkProgress;
+        setTimeout(() => {
+            setBulkProgress(null);
+            setSuccess(__(`Generated ${finalProgress?.success || 0} items. Failed: ${finalProgress?.failed || 0}`, 'localseo-booster'));
+        }, 1000);
     };
 
     // Define columns
@@ -380,6 +417,35 @@ const DataCenter = () => {
                 </Notice>
             )}
 
+            {bulkProgress && (
+                <Notice status="info" isDismissible={false}>
+                    <strong>{__('Bulk AI Generation in Progress...', 'localseo-booster')}</strong>
+                    <div style={{ marginTop: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                            <span>{__('Processing:', 'localseo-booster')} {bulkProgress.current} / {bulkProgress.total}</span>
+                            <span>{Math.round((bulkProgress.current / bulkProgress.total) * 100)}%</span>
+                        </div>
+                        <div style={{ 
+                            width: '100%', 
+                            height: '20px', 
+                            backgroundColor: '#f0f0f0', 
+                            borderRadius: '4px',
+                            overflow: 'hidden'
+                        }}>
+                            <div style={{ 
+                                width: `${(bulkProgress.current / bulkProgress.total) * 100}%`, 
+                                height: '100%', 
+                                backgroundColor: '#2271b1',
+                                transition: 'width 0.3s ease'
+                            }} />
+                        </div>
+                        <div style={{ marginTop: '5px', fontSize: '12px', color: '#666' }}>
+                            {__('Success:', 'localseo-booster')} {bulkProgress.success} | {__('Failed:', 'localseo-booster')} {bulkProgress.failed}
+                        </div>
+                    </div>
+                </Notice>
+            )}
+
             {deleteConfirm && (
                 <Modal
                     title={__('Confirm Delete', 'localseo-booster')}
@@ -398,13 +464,13 @@ const DataCenter = () => {
             )}
 
             <div className="toolbar">
-                <Button variant="primary" onClick={addRow}>
+                <Button variant="primary" onClick={addRow} disabled={bulkProgress !== null}>
                     {__('Add New Row', 'localseo-booster')}
                 </Button>
-                <Button variant="secondary" onClick={bulkGenerateAI}>
-                    {__('Generate All Missing AI Fields', 'localseo-booster')}
+                <Button variant="secondary" onClick={bulkGenerateAI} disabled={bulkProgress !== null}>
+                    {bulkProgress ? __('Generating...', 'localseo-booster') : __('Generate All Missing AI Fields', 'localseo-booster')}
                 </Button>
-                <Button variant="tertiary" onClick={fetchData}>
+                <Button variant="tertiary" onClick={fetchData} disabled={bulkProgress !== null}>
                     {__('Refresh', 'localseo-booster')}
                 </Button>
             </div>

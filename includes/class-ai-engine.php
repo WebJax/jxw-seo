@@ -42,6 +42,8 @@ class AI_Engine {
             return self::call_openai( $api_key, $prompt, $row_data );
         } elseif ( $api_provider === 'anthropic' ) {
             return self::call_anthropic( $api_key, $prompt, $row_data );
+        } elseif ( $api_provider === 'gemini' ) {
+            return self::call_gemini( $api_key, $prompt, $row_data );
         }
 
         return new \WP_Error( 'invalid_provider', __( 'Invalid API provider', 'localseo-booster' ) );
@@ -159,6 +161,74 @@ class AI_Engine {
         }
 
         $content = $body['content'][0]['text'] ?? '';
+        
+        // Try to parse JSON response
+        $parsed = json_decode( $content, true );
+        if ( $parsed && isset( $parsed['intro'] ) ) {
+            return [
+                'ai_generated_intro' => sanitize_textarea_field( $parsed['intro'] ),
+                'meta_title' => sanitize_text_field( $parsed['meta_title'] ?? '' ),
+                'meta_description' => sanitize_textarea_field( $parsed['meta_description'] ?? '' ),
+            ];
+        }
+
+        // Fallback: use the content as intro
+        return [
+            'ai_generated_intro' => sanitize_textarea_field( $content ),
+            'meta_title' => sanitize_text_field( $service . ' in ' . $city ),
+            'meta_description' => sanitize_textarea_field( substr( $content, 0, 155 ) ),
+        ];
+    }
+
+    /**
+     * Call Google Gemini API
+     *
+     * @param string $api_key
+     * @param string $prompt
+     * @param array $row_data
+     * @return array|WP_Error
+     */
+    private static function call_gemini( $api_key, $prompt, $row_data ) {
+        $city = $row_data['city'] ?? '';
+        $service = $row_data['service_keyword'] ?? '';
+
+        $response = wp_remote_post( 
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $api_key,
+            [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'body' => wp_json_encode([
+                    'contents' => [
+                        [
+                            'parts' => [
+                                [
+                                    'text' => $prompt . "\n\nGenerate content for: " . $service . " in " . $city . 
+                                             "\n\nRespond with JSON: {\"intro\": \"...\", \"meta_title\": \"...\", \"meta_description\": \"...\"}"
+                                ]
+                            ]
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.7,
+                        'maxOutputTokens' => 500,
+                    ]
+                ]),
+                'timeout' => 30,
+            ]
+        );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( isset( $body['error'] ) ) {
+            return new \WP_Error( 'gemini_error', $body['error']['message'] ?? 'Unknown error' );
+        }
+
+        $content = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
         
         // Try to parse JSON response
         $parsed = json_decode( $content, true );

@@ -4,13 +4,26 @@
  * 
  * Usage:
  * 1. Place this file in your WordPress root directory
+ *    OR define LOCALSEO_WP_LOAD_PATH to point to your WordPress wp-load.php file
  * 2. Run: php import-example.php
  * 
  * Or include it in your theme's functions.php for one-time execution
  */
 
 // Load WordPress
-require_once __DIR__ . '/wp-load.php';
+$wp_load_path = defined( 'LOCALSEO_WP_LOAD_PATH' )
+    ? LOCALSEO_WP_LOAD_PATH
+    : __DIR__ . '/wp-load.php';
+
+if ( ! file_exists( $wp_load_path ) ) {
+    fwrite(
+        STDERR,
+        "Could not locate wp-load.php. Please define LOCALSEO_WP_LOAD_PATH to point to your WordPress wp-load.php file.\n"
+    );
+    exit( 1 );
+}
+
+require_once $wp_load_path;
 
 // Check if LocalSEO plugin is active
 if ( ! class_exists( 'LocalSEO\Database' ) ) {

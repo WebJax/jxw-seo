@@ -59,6 +59,13 @@ class Router {
         $data = $this->get_current_page_data();
 
         if ( ! $data ) {
+            // No matching LocalSEO data found; mark the request as 404
+            status_header( 404 );
+            global $wp_query;
+            if ( isset( $wp_query ) && is_object( $wp_query ) ) {
+                $wp_query->set_404();
+            }
+            nocache_headers();
             return $template;
         }
 

@@ -1,0 +1,36 @@
+{
+  "name": "localseo-booster",
+  "version": "1.0.0",
+  "description": "AI-Powered Programmatic SEO Plugin for WordPress FSE",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "wp-scripts build admin/index.js --output-path=build",
+    "start": "wp-scripts start admin/index.js --output-path=build",
+    "check-engines": "wp-scripts check-engines",
+    "check-licenses": "wp-scripts check-licenses",
+    "format": "wp-scripts format",
+    "lint:css": "wp-scripts lint-style",
+    "lint:js": "wp-scripts lint-js",
+    "packages-update": "wp-scripts packages-update"
+  },
+  "keywords": [
+    "wordpress",
+    "seo",
+    "ai",
+    "programmatic-seo"
+  ],
+  "author": "WebJax",
+  "license": "GPL-2.0-or-later",
+  "dependencies": {
+    "@tanstack/react-table": "^8.20.5",
+    "@wordpress/api-fetch": "^7.40.0",
+    "@wordpress/components": "^32.2.0",
+    "@wordpress/element": "^6.40.0",
+    "@wordpress/i18n": "^6.13.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^31.5.0"
+  }
+}

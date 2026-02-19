@@ -146,6 +146,9 @@ const DataCenter = () => {
         
         setBulkProgress({ current: 0, total: rowsNeedingAI.length, success: 0, failed: 0 });
         
+        let successCount = 0;
+        let failedCount = 0;
+        
         for (let i = 0; i < rowsNeedingAI.length; i++) {
             const row = rowsNeedingAI[i];
             
@@ -162,10 +165,11 @@ const DataCenter = () => {
                     )
                 );
                 
+                successCount++;
                 setBulkProgress(prev => ({
                     ...prev,
                     current: i + 1,
-                    success: prev.success + 1
+                    success: successCount
                 }));
                 
                 // Add delay to avoid rate limiting
@@ -173,18 +177,18 @@ const DataCenter = () => {
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
             } catch (err) {
+                failedCount++;
                 setBulkProgress(prev => ({
                     ...prev,
                     current: i + 1,
-                    failed: prev.failed + 1
+                    failed: failedCount
                 }));
             }
         }
         
-        const finalProgress = bulkProgress;
         setTimeout(() => {
             setBulkProgress(null);
-            setSuccess(__(`Generated ${finalProgress?.success || 0} items. Failed: ${finalProgress?.failed || 0}`, 'localseo-booster'));
+            setSuccess(__(`Generated ${successCount} items. Failed: ${failedCount}`, 'localseo-booster'));
         }, 1000);
     };
 

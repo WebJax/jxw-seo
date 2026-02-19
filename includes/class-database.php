@@ -85,8 +85,8 @@ class Database {
             $slug = $base_slug;
             $counter = 1;
             
-            // Check for duplicate slugs and append number if needed
-            while ( $this->get_by_slug( $slug ) ) {
+            // Check for duplicate slugs and append number if needed (max 100 attempts)
+            while ( $this->get_by_slug( $slug ) && $counter < 100 ) {
                 $slug = $base_slug . '-' . $counter;
                 $counter++;
             }

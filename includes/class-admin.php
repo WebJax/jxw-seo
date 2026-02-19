@@ -119,6 +119,15 @@ class Admin {
             update_option( 'localseo_api_provider', sanitize_text_field( $_POST['api_provider'] ?? 'openai' ) );
             update_option( 'localseo_system_prompt', wp_kses_post( $_POST['system_prompt'] ?? '' ) );
 
+            // SEO settings
+            update_option( 'localseo_business_name', sanitize_text_field( $_POST['business_name'] ?? '' ) );
+            update_option( 'localseo_business_phone', sanitize_text_field( $_POST['business_phone'] ?? '' ) );
+            update_option( 'localseo_og_image', esc_url_raw( $_POST['og_image'] ?? '' ) );
+            update_option( 'localseo_schema_type', sanitize_text_field( $_POST['schema_type'] ?? 'LocalBusiness' ) );
+            update_option( 'localseo_robots', sanitize_text_field( $_POST['robots'] ?? 'index, follow' ) );
+            update_option( 'localseo_schema_enabled', ! empty( $_POST['schema_enabled'] ) ? '1' : '0' );
+            update_option( 'localseo_sitemap_enabled', ! empty( $_POST['sitemap_enabled'] ) ? '1' : '0' );
+
             echo '<div class="notice notice-success"><p>' . __( 'Settings saved successfully!', 'localseo-booster' ) . '</p></div>';
         }
 
@@ -126,12 +135,21 @@ class Admin {
         $api_provider = get_option( 'localseo_api_provider', 'openai' );
         $system_prompt = get_option( 'localseo_system_prompt', 'You are an SEO expert for a local service company. Write a 50-word intro for {service} in {city} ({zip}). Focus on local expertise and trust.' );
 
+        $business_name   = get_option( 'localseo_business_name', '' );
+        $business_phone  = get_option( 'localseo_business_phone', '' );
+        $og_image        = get_option( 'localseo_og_image', '' );
+        $schema_type     = get_option( 'localseo_schema_type', 'LocalBusiness' );
+        $robots          = get_option( 'localseo_robots', 'index, follow' );
+        $schema_enabled  = get_option( 'localseo_schema_enabled', '1' );
+        $sitemap_enabled = get_option( 'localseo_sitemap_enabled', '1' );
+
         ?>
         <div class="wrap">
             <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
             <form method="post" action="">
                 <?php wp_nonce_field( 'localseo_settings', 'localseo_settings_nonce' ); ?>
                 
+                <h2><?php _e( 'AI Settings', 'localseo-booster' ); ?></h2>
                 <table class="form-table">
                     <tr>
                         <th scope="row">
@@ -163,6 +181,84 @@ class Admin {
                             <p class="description">
                                 <?php _e( 'Available placeholders: {service}, {city}, {zip}', 'localseo-booster' ); ?>
                             </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <h2><?php _e( 'SEO Settings', 'localseo-booster' ); ?></h2>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="business_name"><?php _e( 'Business Name', 'localseo-booster' ); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" name="business_name" id="business_name" value="<?php echo esc_attr( $business_name ); ?>" class="regular-text" />
+                            <p class="description"><?php _e( 'Used in Schema.org structured data. Defaults to site name if empty.', 'localseo-booster' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="business_phone"><?php _e( 'Business Phone', 'localseo-booster' ); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" name="business_phone" id="business_phone" value="<?php echo esc_attr( $business_phone ); ?>" class="regular-text" />
+                            <p class="description"><?php _e( 'Added to Schema.org LocalBusiness/Service markup.', 'localseo-booster' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="og_image"><?php _e( 'Default OG Image URL', 'localseo-booster' ); ?></label>
+                        </th>
+                        <td>
+                            <input type="url" name="og_image" id="og_image" value="<?php echo esc_url( $og_image ); ?>" class="regular-text" />
+                            <p class="description"><?php _e( 'Fallback image for Open Graph and Twitter Card meta tags.', 'localseo-booster' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="schema_type"><?php _e( 'Schema Type', 'localseo-booster' ); ?></label>
+                        </th>
+                        <td>
+                            <select name="schema_type" id="schema_type" class="regular-text">
+                                <option value="LocalBusiness" <?php selected( $schema_type, 'LocalBusiness' ); ?>><?php _e( 'LocalBusiness', 'localseo-booster' ); ?></option>
+                                <option value="Service" <?php selected( $schema_type, 'Service' ); ?>><?php _e( 'Service', 'localseo-booster' ); ?></option>
+                                <option value="ProfessionalService" <?php selected( $schema_type, 'ProfessionalService' ); ?>><?php _e( 'ProfessionalService', 'localseo-booster' ); ?></option>
+                                <option value="HomeAndConstructionBusiness" <?php selected( $schema_type, 'HomeAndConstructionBusiness' ); ?>><?php _e( 'HomeAndConstructionBusiness', 'localseo-booster' ); ?></option>
+                            </select>
+                            <p class="description"><?php _e( 'Schema.org type used for JSON-LD structured data.', 'localseo-booster' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="robots"><?php _e( 'Robots Meta', 'localseo-booster' ); ?></label>
+                        </th>
+                        <td>
+                            <select name="robots" id="robots" class="regular-text">
+                                <option value="index, follow" <?php selected( $robots, 'index, follow' ); ?>><?php _e( 'index, follow (default)', 'localseo-booster' ); ?></option>
+                                <option value="noindex, follow" <?php selected( $robots, 'noindex, follow' ); ?>><?php _e( 'noindex, follow', 'localseo-booster' ); ?></option>
+                                <option value="index, nofollow" <?php selected( $robots, 'index, nofollow' ); ?>><?php _e( 'index, nofollow', 'localseo-booster' ); ?></option>
+                                <option value="noindex, nofollow" <?php selected( $robots, 'noindex, nofollow' ); ?>><?php _e( 'noindex, nofollow', 'localseo-booster' ); ?></option>
+                            </select>
+                            <p class="description"><?php _e( 'Robots meta tag applied to all LocalSEO virtual pages.', 'localseo-booster' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e( 'Structured Data', 'localseo-booster' ); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="schema_enabled" id="schema_enabled" value="1" <?php checked( $schema_enabled, '1' ); ?> />
+                                <?php _e( 'Enable JSON-LD Schema.org markup on virtual pages', 'localseo-booster' ); ?>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e( 'XML Sitemap', 'localseo-booster' ); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="sitemap_enabled" id="sitemap_enabled" value="1" <?php checked( $sitemap_enabled, '1' ); ?> />
+                                <?php _e( 'Include LocalSEO pages in the WordPress XML sitemap', 'localseo-booster' ); ?>
+                            </label>
+                            <p class="description"><?php printf( __( 'Sitemap index: <a href="%s" target="_blank">%s</a>', 'localseo-booster' ), esc_url( home_url( '/wp-sitemap.xml' ) ), esc_html( home_url( '/wp-sitemap.xml' ) ) ); ?></p>
                         </td>
                     </tr>
                 </table>

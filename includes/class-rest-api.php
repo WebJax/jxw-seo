@@ -14,6 +14,7 @@ class REST_API {
     public function __construct() {
         $this->db = new Database();
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+        add_action( 'admin_post_localseo_export_csv', [ $this, 'export_csv' ] );
     }
 
     /**
@@ -59,6 +60,13 @@ class REST_API {
         register_rest_route( $this->namespace, '/generate-ai-bulk', [
             'methods' => 'POST',
             'callback' => [ $this, 'generate_ai_bulk' ],
+            'permission_callback' => [ $this, 'check_permission' ],
+        ]);
+
+        // Import rows from CSV
+        register_rest_route( $this->namespace, '/import-csv', [
+            'methods' => 'POST',
+            'callback' => [ $this, 'import_csv' ],
             'permission_callback' => [ $this, 'check_permission' ],
         ]);
     }
@@ -217,5 +225,150 @@ class REST_API {
         }
 
         return rest_ensure_response( $results );
+    }
+
+    /**
+     * Import rows from a CSV string.
+     *
+     * Expects a JSON body: { "csv": "<csv content>" }
+     * Required CSV columns: city, service_keyword
+     * Optional columns: zip, meta_title, meta_description, nearby_cities, local_landmarks
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function import_csv( $request ) {
+        $params      = $request->get_json_params();
+        $csv_content = isset( $params['csv'] ) ? (string) $params['csv'] : '';
+
+        if ( '' === trim( $csv_content ) ) {
+            return new \WP_Error(
+                'empty_csv',
+                __( 'No CSV data provided.', 'localseo-booster' ),
+                [ 'status' => 400 ]
+            );
+        }
+
+        // Split into lines; filter out completely blank lines.
+        $lines = array_filter(
+            array_map( 'trim', explode( "\n", str_replace( "\r\n", "\n", $csv_content ) ) )
+        );
+
+        if ( count( $lines ) < 2 ) {
+            return new \WP_Error(
+                'invalid_csv',
+                __( 'CSV must contain a header row and at least one data row.', 'localseo-booster' ),
+                [ 'status' => 400 ]
+            );
+        }
+
+        // Parse header row; sanitize header names to alphanumeric + underscores only.
+        $headers = str_getcsv( array_shift( $lines ) );
+        $headers = array_map( function( $h ) {
+            return preg_replace( '/[^a-z0-9_]/', '', strtolower( trim( $h ) ) );
+        }, $headers );
+
+        $required = [ 'city', 'service_keyword' ];
+        foreach ( $required as $field ) {
+            if ( ! in_array( $field, $headers, true ) ) {
+                return new \WP_Error(
+                    'missing_columns',
+                    /* translators: %s: comma-separated list of required column names */
+                    sprintf(
+                        __( 'CSV must include these columns: %s', 'localseo-booster' ),
+                        implode( ', ', $required )
+                    ),
+                    [ 'status' => 400 ]
+                );
+            }
+        }
+
+        $imported = 0;
+        $skipped  = 0;
+
+        foreach ( $lines as $line ) {
+            $values = str_getcsv( $line );
+
+            // Pad to header count in case trailing empty columns are missing.
+            while ( count( $values ) < count( $headers ) ) {
+                $values[] = '';
+            }
+
+            $assoc = array_combine( $headers, array_slice( $values, 0, count( $headers ) ) );
+
+            $city    = sanitize_text_field( $assoc['city'] ?? '' );
+            $service = sanitize_text_field( $assoc['service_keyword'] ?? '' );
+
+            if ( '' === $city || '' === $service ) {
+                $skipped++;
+                continue;
+            }
+
+            $row_data = [
+                'city'             => $city,
+                'zip'              => sanitize_text_field( $assoc['zip'] ?? '' ),
+                'service_keyword'  => $service,
+                'meta_title'       => sanitize_text_field( $assoc['meta_title'] ?? '' ),
+                'meta_description' => sanitize_textarea_field( $assoc['meta_description'] ?? '' ),
+                'nearby_cities'    => sanitize_text_field( $assoc['nearby_cities'] ?? '' ),
+                'local_landmarks'  => sanitize_textarea_field( $assoc['local_landmarks'] ?? '' ),
+            ];
+
+            $id = $this->db->insert( $row_data );
+            if ( $id ) {
+                $imported++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        return rest_ensure_response( [
+            'imported' => $imported,
+            'skipped'  => $skipped,
+        ] );
+    }
+
+    /**
+     * Handle admin-post CSV export action.
+     *
+     * Outputs a UTF-8 CSV file for download and exits.
+     * Secured by capability check and nonce verification.
+     */
+    public function export_csv() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( __( 'You do not have sufficient permissions to access this page.', 'localseo-booster' ) );
+        }
+
+        check_admin_referer( 'localseo_export_csv' );
+
+        $rows = $this->db->get_all();
+
+        // Send CSV headers.
+        header( 'Content-Type: text/csv; charset=utf-8' );
+        header( 'Content-Disposition: attachment; filename="localseo-data.csv"' );
+        header( 'Pragma: no-cache' );
+        header( 'Expires: 0' );
+
+        $output = fopen( 'php://output', 'w' );
+
+        // BOM for Excel UTF-8 compatibility.
+        fwrite( $output, "\xEF\xBB\xBF" );
+
+        fputcsv( $output, [ 'city', 'zip', 'service_keyword', 'meta_title', 'meta_description', 'nearby_cities', 'local_landmarks' ] );
+
+        foreach ( $rows as $row ) {
+            fputcsv( $output, [
+                $row->city,
+                $row->zip,
+                $row->service_keyword,
+                $row->meta_title,
+                $row->meta_description,
+                $row->nearby_cities ?? '',
+                $row->local_landmarks ?? '',
+            ] );
+        }
+
+        fclose( $output );
+        exit;
     }
 }

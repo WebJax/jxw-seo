@@ -13,6 +13,7 @@ class Activator {
      */
     public static function activate() {
         self::create_database_table();
+        self::create_redirects_table();
         self::add_rewrite_rules();
         flush_rewrite_rules();
     }
@@ -87,6 +88,9 @@ class Activator {
         }
 
         update_option( 'localseo_db_version', '1.1' );
+
+        // Ensure the redirects table exists for installations that pre-date v1.2.
+        self::create_redirects_table();
     }
 
     /**
@@ -95,5 +99,29 @@ class Activator {
     private static function add_rewrite_rules() {
         // Router class will handle the actual rewrite rules
         // This is just a placeholder to ensure flush happens
+    }
+
+    /**
+     * Create the redirects table (IF NOT EXISTS – safe to call on every activation).
+     */
+    public static function create_redirects_table() {
+        global $wpdb;
+
+        $table_name      = $wpdb->prefix . 'localseo_redirects';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+            id bigint unsigned NOT NULL AUTO_INCREMENT,
+            source_url varchar(500) NOT NULL,
+            target_url varchar(500) NOT NULL,
+            redirect_type smallint unsigned NOT NULL DEFAULT 301,
+            hits bigint unsigned NOT NULL DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY source_url (source_url(191))
+        ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
     }
 }

@@ -13,6 +13,9 @@ AI-Powered Programmatic SEO Plugin for WordPress Full Site Editing (FSE) that ge
 - 📄 **Schema Markup**: JSON-LD structured data (LocalBusiness, Service, etc.)
 - 🗺️ **XML Sitemap**: Integration with WordPress core sitemaps
 - 📝 **SEO Meta Box**: Add SEO fields to all WordPress posts and pages
+- 📥 **CSV Import/Export**: Bulk-import city/service data from a CSV file and export your dataset at any time
+- 🔀 **Redirect Manager**: Manage 301/302 URL redirects with a click-counter to track usage
+- 🤖 **Robots.txt Editor**: Append custom directives to the WordPress-generated robots.txt
 
 ## Requirements
 
@@ -109,6 +112,42 @@ The plugin adds an SEO meta box to all public post types:
 - Robots directive (index/noindex, follow/nofollow)
 - Schema Type (Article, WebPage, LocalBusiness, etc.)
 
+### 6. CSV Import / Export
+
+In **LocalSEO > Data Center**:
+- Click **Export CSV** to download all your city/service data as a UTF-8 CSV file (Excel-compatible BOM included).
+- Click **Import CSV** to bulk-import rows from a CSV file.
+
+CSV format (header row required):
+
+```
+city,zip,service_keyword,meta_title,meta_description,nearby_cities,local_landmarks
+Copenhagen,1000,Plumber,,,
+Aarhus,8000,VVS,,,
+```
+
+`city` and `service_keyword` are the only required columns; all others are optional.
+
+### 7. Redirect Manager
+
+Go to **LocalSEO > Redirects** to manage URL redirects:
+- Enter the **Source Path** (relative, e.g. `/old-page/`)
+- Enter the **Target URL** (full URL, e.g. `https://example.com/new-page/`)
+- Choose **301 – Permanent** (recommended for SEO) or **302 – Temporary**
+- Each redirect row tracks the number of times it has been triggered (**Hits**)
+
+### 8. Robots.txt Editor
+
+Go to **LocalSEO > Settings** and scroll to the **Robots.txt** section to append custom directives to the WordPress-generated `robots.txt`.  
+Example:
+
+```
+User-agent: GPTBot
+Disallow: /
+```
+
+A link to the live `/robots.txt` is provided so you can verify the output.
+
 ## Database Schema
 
 The plugin creates a custom table `wp_localseo_data` with:
@@ -125,6 +164,14 @@ The plugin creates a custom table `wp_localseo_data` with:
 - `created_at` - Creation timestamp
 - `updated_at` - Last update timestamp
 
+The Redirect Manager stores rules in `wp_localseo_redirects`:
+- `id` - Primary key
+- `source_url` - Path to redirect from (e.g. `/old-page/`)
+- `target_url` - Full URL to redirect to
+- `redirect_type` - HTTP status code (301 or 302)
+- `hits` - Number of times this rule has fired
+- `created_at` - Creation timestamp
+
 ## REST API Endpoints
 
 The plugin provides the following REST API endpoints:
@@ -135,6 +182,9 @@ The plugin provides the following REST API endpoints:
 - `DELETE /wp-json/localseo/v1/data/{id}` - Delete row
 - `POST /wp-json/localseo/v1/generate-ai/{id}` - Generate AI content for row
 - `POST /wp-json/localseo/v1/generate-ai-bulk` - Bulk generate AI content
+- `POST /wp-json/localseo/v1/import-csv` - Import rows from a CSV string (body: `{ "csv": "…" }`)
+
+CSV export is triggered via the admin UI (Downloads the file directly).
 
 ## Architecture
 
@@ -162,24 +212,34 @@ Integration with WordPress core sitemaps API to include virtual LocalSEO pages.
 ### Module H: SEO Meta Box
 Adds comprehensive SEO fields to all public post types for complete site-wide SEO control.
 
+### Module I: CSV Import/Export
+Bulk import city/service rows from a CSV file via the Data Center UI. Export the full dataset as a UTF-8 CSV with a single click.
+
+### Module J: Redirect Manager
+Manages 301/302 URL redirects stored in a dedicated `wp_localseo_redirects` database table. Redirects are processed on every frontend request (priority 1) and cached in a transient for performance. A hit counter tracks how many times each rule fires.
+
+### Module K: Robots.txt Editor
+Appends custom robots.txt directives to the WordPress-generated output via the `robots_txt` filter. Rules are configured through **LocalSEO > Settings**.
+
 ## File Structure
 
 ```
 localseo-booster/
 ├── admin/                      # React admin interface
 │   ├── components/
-│   │   └── DataCenter.js      # Main data grid component
+│   │   └── DataCenter.js      # Main data grid component (with CSV import/export)
 │   ├── index.js               # Entry point
 │   └── style.css              # Admin styles
 ├── build/                      # Compiled assets (generated)
 ├── includes/                   # PHP classes
 │   ├── class-activator.php    # Plugin activation
-│   ├── class-admin.php        # Admin interface
+│   ├── class-admin.php        # Admin interface + robots.txt filter
 │   ├── class-ai-engine.php    # AI integration
 │   ├── class-block-bindings.php # Block bindings
 │   ├── class-database.php     # Database operations
 │   ├── class-deactivator.php  # Plugin deactivation
-│   ├── class-rest-api.php     # REST API endpoints
+│   ├── class-redirects.php    # Redirect Manager (301/302)
+│   ├── class-rest-api.php     # REST API endpoints (incl. CSV import/export)
 │   ├── class-router.php       # Virtual routing
 │   ├── class-seo-tags.php     # SEO meta tags output
 │   ├── class-schema.php       # JSON-LD schema markup

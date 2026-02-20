@@ -379,14 +379,14 @@ const DataCenter = () => {
                                 )
                             );
                         }}
-                        onBlur={() => {
+                        onBlur={e => {
                             setEditingCell(null);
-                            updateCell(rowId, 'nearby_cities', value);
+                            updateCell(rowId, 'nearby_cities', e.target.value);
                         }}
                         onKeyDown={e => {
                             if (e.key === 'Enter') {
                                 setEditingCell(null);
-                                updateCell(rowId, 'nearby_cities', value);
+                                updateCell(rowId, 'nearby_cities', e.target.value);
                             }
                         }}
                         autoFocus
@@ -419,14 +419,14 @@ const DataCenter = () => {
                                 )
                             );
                         }}
-                        onBlur={() => {
+                        onBlur={e => {
                             setEditingCell(null);
-                            updateCell(rowId, 'local_landmarks', value);
+                            updateCell(rowId, 'local_landmarks', e.target.value);
                         }}
                         onKeyDown={e => {
                             if (e.key === 'Enter') {
                                 setEditingCell(null);
-                                updateCell(rowId, 'local_landmarks', value);
+                                updateCell(rowId, 'local_landmarks', e.target.value);
                             }
                         }}
                         autoFocus

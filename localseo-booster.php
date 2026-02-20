@@ -60,7 +60,13 @@ function localseo_deactivate_plugin() {
 // Run database migrations when needed (non-destructive, adds missing columns only)
 add_action( 'plugins_loaded', 'localseo_maybe_run_migrations', 5 );
 function localseo_maybe_run_migrations() {
-    if ( get_option( 'localseo_db_version', '0' ) !== '1.1' ) {
+    // Only run migration checks in admin context to avoid unnecessary work on frontend requests.
+    if ( ! is_admin() || wp_doing_ajax() ) {
+        return;
+    }
+
+    $db_version = get_option( 'localseo_db_version', '0' );
+    if ( ! $db_version || version_compare( $db_version, '1.1', '<' ) ) {
         require_once LOCALSEO_PLUGIN_DIR . 'includes/class-activator.php';
         LocalSEO\Activator::maybe_upgrade_database();
     }

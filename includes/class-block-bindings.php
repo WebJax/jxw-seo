@@ -67,6 +67,26 @@ class Block_Bindings {
 
         $field = $field_map[ $key ] ?? $key;
 
+        // Computed / virtual keys
+        if ( $key === 'phone_url' ) {
+            $phone = get_option( 'localseo_business_phone', '' );
+            return $phone ? 'tel:' . preg_replace( '/[^+\d]/', '', $phone ) : '';
+        }
+
+        if ( $key === 'cta_label' ) {
+            $phone = get_option( 'localseo_business_phone', '' );
+            $city  = $data->city ?? '';
+            if ( $phone ) {
+                return sprintf(
+                    /* translators: 1: city name, 2: phone number */
+                    __( 'Ring til din lokale ekspert i %1$s – %2$s', 'localseo-booster' ),
+                    $city,
+                    $phone
+                );
+            }
+            return __( 'Kontakt os i dag', 'localseo-booster' );
+        }
+
         // Return the field value
         if ( isset( $data->$field ) ) {
             return $data->$field;

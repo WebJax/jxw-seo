@@ -44,9 +44,15 @@ $nearby_array = array_values( array_filter( array_map( 'trim', explode( ',', $ne
 $phone         = esc_html( get_option( 'localseo_business_phone', '' ) );
 $response_time = esc_html( get_option( 'localseo_response_time', '60' ) );
 $customer_text = esc_html( get_option( 'localseo_customer_count_text', '' ) );
+
+// Schema.org type from settings (validated against allowed list)
+$allowed_schema_types = [ 'LocalBusiness', 'Service', 'ProfessionalService', 'HomeAndConstructionBusiness' ];
+$schema_type_option   = get_option( 'localseo_schema_type', 'Service' );
+$schema_type          = in_array( $schema_type_option, $allowed_schema_types, true ) ? $schema_type_option : 'Service';
+$schema_itemtype      = 'https://schema.org/' . $schema_type;
 ?>
 
-<article class="localseo-page localseo-mastertemplate" itemscope itemtype="https://schema.org/Service">
+<article class="localseo-page localseo-mastertemplate" itemscope itemtype="<?php echo esc_url( $schema_itemtype ); ?>">
 
     <!-- ═══════════════════════════════════════════════════════════════════════
          1. HERO SECTION
@@ -136,9 +142,20 @@ $customer_text = esc_html( get_option( 'localseo_customer_count_text', '' ) );
             <p class="localseo-nearby-links">
                 <strong><?php _e( 'Vi kører også i:', 'localseo-booster' ); ?></strong>
                 <?php
-                $links = array_map( 'esc_html', $nearby_array );
-                echo implode( ', ', $links );
-                echo '.';
+                // Build linked city names using the /service/{service}/{city} route
+                $service_slug = sanitize_title( $data->service_keyword );
+                $links = array_map(
+                    function( $nearby_city ) use ( $service_slug ) {
+                        $city_slug = sanitize_title( $nearby_city );
+                        return sprintf(
+                            '<a href="%1$s">%2$s</a>',
+                            esc_url( home_url( '/service/' . $service_slug . '/' . $city_slug . '/' ) ),
+                            esc_html( $nearby_city )
+                        );
+                    },
+                    $nearby_array
+                );
+                echo implode( ', ', $links ) . '.'; // Links are already escaped above
                 ?>
             </p>
             <?php endif; ?>

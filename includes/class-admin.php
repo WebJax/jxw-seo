@@ -221,7 +221,7 @@ class Admin {
                         </th>
                         <td>
                             <input type="text" name="response_time" id="response_time" value="<?php echo esc_attr( $response_time ); ?>" class="small-text" />
-                            <p class="description"><?php _e( 'Typical response time shown on landing pages, e.g. "60". Used in the mastertemplate CTA section.', 'localseo-booster' ); ?></p>
+                            <p class="description"><?php _e( 'Typical response time shown on landing pages, e.g. "60". Used in the Local Relevance section of the landing page template.', 'localseo-booster' ); ?></p>
                         </td>
                     </tr>
                     <tr>

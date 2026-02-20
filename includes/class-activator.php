@@ -73,17 +73,17 @@ class Activator {
             return;
         }
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $columns = $wpdb->get_col( "DESCRIBE `{$table}`", 0 );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- %i identifier escaping requires WP 6.2+ (plugin requires WP 6.5+)
+        $columns = $wpdb->get_col( $wpdb->prepare( 'DESCRIBE %i', $table ), 0 );
 
         if ( ! in_array( 'nearby_cities', $columns, true ) ) {
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN nearby_cities varchar(500) NOT NULL DEFAULT '' AFTER meta_description" );
+            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN nearby_cities varchar(500) DEFAULT '' AFTER meta_description" );
         }
 
         if ( ! in_array( 'local_landmarks', $columns, true ) ) {
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN local_landmarks text NOT NULL DEFAULT '' AFTER nearby_cities" );
+            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN local_landmarks text DEFAULT '' AFTER nearby_cities" );
         }
 
         update_option( 'localseo_db_version', '1.1' );

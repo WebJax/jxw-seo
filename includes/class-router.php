@@ -21,17 +21,17 @@ class Router {
      * Add rewrite rules for virtual pages
      */
     public function add_rewrite_rules() {
-        // Pattern: /service-city/ or custom slug
-        add_rewrite_rule(
-            '^localseo/([^/]+)/?$',
-            'index.php?localseo_page=1&localseo_slug=$matches[1]',
-            'top'
-        );
-
-        // Alternative pattern: /service/city/
+        // Primary pattern: /service/keyword/city/
         add_rewrite_rule(
             '^service/([^/]+)/([^/]+)/?$',
             'index.php?localseo_page=1&localseo_service=$matches[1]&localseo_city=$matches[2]',
+            'top'
+        );
+
+        // Legacy pattern: /localseo/slug/ — kept for backward compatibility (redirects to new URL)
+        add_rewrite_rule(
+            '^localseo/([^/]+)/?$',
+            'index.php?localseo_page=1&localseo_slug=$matches[1]',
             'top'
         );
     }
@@ -67,6 +67,12 @@ class Router {
             }
             nocache_headers();
             return $template;
+        }
+
+        // 301-redirect legacy /localseo/{slug}/ URLs to the canonical /service/{service}/{city}/ structure
+        if ( get_query_var( 'localseo_slug' ) && ! empty( $data->service_keyword ) && ! empty( $data->city ) ) {
+            wp_redirect( self::get_page_url( $data ), 301 );
+            exit;
         }
 
         // Store data in global for block bindings
@@ -116,5 +122,18 @@ class Router {
     public static function get_current_data() {
         global $localseo_current_data;
         return $localseo_current_data;
+    }
+
+    /**
+     * Build the canonical URL for a LocalSEO data row.
+     * Uses /service/{service_keyword}/{city}/ structure.
+     *
+     * @param object $data LocalSEO row (needs service_keyword and city).
+     * @return string
+     */
+    public static function get_page_url( $data ) {
+        $service = sanitize_title( $data->service_keyword ?? '' );
+        $city    = sanitize_title( $data->city ?? '' );
+        return home_url( '/service/' . $service . '/' . $city . '/' );
     }
 }

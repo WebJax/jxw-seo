@@ -66,7 +66,7 @@ class SEO_Tags {
         $city    = ! empty( $data->city ) ? $data->city : '';
         $title   = ! empty( $data->meta_title ) ? $data->meta_title : trim( $service . ' in ' . $city, ' in' );
         $description = ! empty( $data->meta_description ) ? $data->meta_description : '';
-        $canonical   = home_url( '/localseo/' . $data->custom_slug . '/' );
+        $canonical   = Router::get_page_url( $data );
         $og_image    = get_option( 'localseo_og_image', '' );
         $site_name   = get_bloginfo( 'name' );
 

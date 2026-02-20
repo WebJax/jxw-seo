@@ -11,6 +11,7 @@ namespace LocalSEO;
 class Schema {
     public function __construct() {
         add_action( 'wp_head', [ $this, 'output_schema' ], 5 );
+        add_action( 'wp_head', [ $this, 'output_post_schema' ], 5 );
     }
 
     /**
@@ -82,6 +83,71 @@ class Schema {
         $breadcrumb = $this->build_breadcrumb( $data, $service, $city );
         if ( $breadcrumb ) {
             $schema['breadcrumb'] = $breadcrumb;
+        }
+
+        echo '<script type="application/ld+json">' . "\n";
+        echo wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+        echo "\n" . '</script>' . "\n";
+    }
+
+    /**
+     * Output JSON-LD structured data for regular WordPress posts and pages.
+     *
+     * Only runs when a schema type has been explicitly chosen in the SEO metabox.
+     */
+    public function output_post_schema() {
+        // Skip LocalSEO virtual pages — handled by output_schema()
+        if ( Router::get_current_data() ) {
+            return;
+        }
+
+        if ( ! is_singular() ) {
+            return;
+        }
+
+        global $post;
+        if ( ! $post ) {
+            return;
+        }
+
+        $schema_type = (string) get_post_meta( $post->ID, '_localseo_schema_type', true );
+        if ( empty( $schema_type ) ) {
+            return;
+        }
+
+        $meta_title         = (string) get_post_meta( $post->ID, '_localseo_meta_title', true );
+        $meta_description   = (string) get_post_meta( $post->ID, '_localseo_meta_description', true );
+        $post_og_image      = (string) get_post_meta( $post->ID, '_localseo_og_image', true );
+        $canonical_override = (string) get_post_meta( $post->ID, '_localseo_canonical', true );
+
+        $title    = $meta_title ?: get_the_title( $post );
+        $url      = $canonical_override ?: (string) get_permalink( $post );
+        $og_image = $post_og_image ?: get_option( 'localseo_og_image', '' );
+
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type'    => $schema_type,
+            'name'     => $title,
+            'url'      => $url,
+        ];
+
+        if ( $meta_description ) {
+            $schema['description'] = $meta_description;
+        }
+
+        if ( $og_image ) {
+            $schema['image'] = $og_image;
+        }
+
+        // Article-type extras: dates and author
+        $article_types = [ 'Article', 'BlogPosting', 'NewsArticle' ];
+        if ( in_array( $schema_type, $article_types, true ) ) {
+            $schema['datePublished'] = (string) get_the_date( 'c', $post );
+            $schema['dateModified']  = (string) get_the_modified_date( 'c', $post );
+            $schema['author']        = [
+                '@type' => 'Person',
+                'name'  => get_the_author_meta( 'display_name', (int) $post->post_author ),
+            ];
         }
 
         echo '<script type="application/ld+json">' . "\n";

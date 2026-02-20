@@ -49,7 +49,9 @@ Navigate to **LocalSEO > Settings** in WordPress admin:
 - Select your AI provider (OpenAI, Anthropic, or Google Gemini)
 - Enter your API key
 - Customize the system prompt template
-- Configure SEO settings (robots, OG image, business details)
+- Configure SEO settings (robots, OG image)
+- Set business details (Business Name, Business Phone)
+- Set social-proof values (Response Time, Customers Served text)
 - Enable/disable sitemap and schema output
 
 ### 2. Add Data
@@ -62,11 +64,12 @@ Go to **LocalSEO > Data Center**:
 
 ### 3. Virtual Page URLs
 
-Pages are accessible via two URL patterns:
-- `/localseo/{custom-slug}/`
+Pages are accessible via the canonical URL pattern:
 - `/service/{service-keyword}/{city}/`
 
-Example: `/localseo/kloakmester-dianalund/`
+Example: `/service/kloakmester/dianalund/`
+
+The legacy `/localseo/{custom-slug}/` pattern is still supported for backward compatibility and automatically **301-redirects** to the canonical `/service/{service}/{city}/` URL.
 
 ### 4. Block Bindings in FSE Templates
 
@@ -76,9 +79,14 @@ Create or edit a block template and bind content to LocalSEO data:
 - `city` - City name
 - `zip` - ZIP code
 - `service` or `service_keyword` - Service name
-- `intro` or `ai_generated_intro` - AI-generated introduction
+- `intro`, `intro_text`, or `ai_generated_intro` - AI-generated introduction
 - `meta_title` - SEO title
 - `meta_description` - SEO description
+- `slug` - Custom URL slug
+- `nearby_cities` - Nearby cities (comma-separated)
+- `local_landmarks` - Notable local landmarks
+- `phone_url` - Business phone as a `tel:` link (computed)
+- `cta_label` - Call-to-action label including city and phone (computed)
 
 #### Example Block Code:
 ```html
@@ -112,6 +120,8 @@ The plugin creates a custom table `wp_localseo_data` with:
 - `ai_generated_intro` - AI-generated introduction text
 - `meta_title` - SEO title tag
 - `meta_description` - SEO meta description
+- `nearby_cities` - Comma-separated nearby cities
+- `local_landmarks` - Notable local landmarks
 - `created_at` - Creation timestamp
 - `updated_at` - Last update timestamp
 
@@ -144,7 +154,7 @@ WordPress 6.5+ Block Bindings API integration for seamless FSE template support.
 Outputs meta tags (title, description, Open Graph, Twitter Cards, canonical, robots) for both virtual pages and regular posts/pages.
 
 ### Module F: Schema Markup
-JSON-LD structured data output for LocalSEO pages with support for LocalBusiness, Service, and related schema types.
+JSON-LD structured data output for LocalSEO pages with support for LocalBusiness, Service, and related schema types. Includes BreadcrumbList markup and outputs schema for regular posts/pages when a schema type is set in the SEO meta box.
 
 ### Module G: XML Sitemap
 Integration with WordPress core sitemaps API to include virtual LocalSEO pages.

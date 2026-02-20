@@ -11,6 +11,21 @@ class Admin {
     public function __construct() {
         add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
+        add_filter( 'robots_txt', [ $this, 'append_robots_txt' ] );
+    }
+
+    /**
+     * Append custom robots.txt rules to the WordPress-generated output.
+     *
+     * @param string $output Current robots.txt content.
+     * @return string
+     */
+    public function append_robots_txt( $output ) {
+        $custom = get_option( 'localseo_robots_txt', '' );
+        if ( '' !== trim( $custom ) ) {
+            $output .= "\n" . trim( $custom ) . "\n";
+        }
+        return $output;
     }
 
     /**
@@ -86,6 +101,7 @@ class Admin {
             wp_localize_script( 'localseo-admin', 'localSEOData', [
                 'apiUrl' => rest_url( 'localseo/v1' ),
                 'nonce' => wp_create_nonce( 'wp_rest' ),
+                'exportUrl' => wp_nonce_url( admin_url( 'admin-post.php?action=localseo_export_csv' ), 'localseo_export_csv' ),
                 'settings' => [
                     'hasApiKey' => ! empty( get_option( 'localseo_api_key', '' ) ),
                     'apiProvider' => get_option( 'localseo_api_provider', 'openai' ),
@@ -136,6 +152,9 @@ class Admin {
             update_option( 'localseo_schema_enabled', ! empty( $_POST['schema_enabled'] ) ? '1' : '0' );
             update_option( 'localseo_sitemap_enabled', ! empty( $_POST['sitemap_enabled'] ) ? '1' : '0' );
 
+            // Robots.txt
+            update_option( 'localseo_robots_txt', sanitize_textarea_field( $_POST['robots_txt'] ?? '' ) );
+
             echo '<div class="notice notice-success"><p>' . __( 'Settings saved successfully!', 'localseo-booster' ) . '</p></div>';
         }
 
@@ -143,15 +162,16 @@ class Admin {
         $api_provider = get_option( 'localseo_api_provider', 'openai' );
         $system_prompt = get_option( 'localseo_system_prompt', 'You are an SEO expert for a local service company. Write a 50-word intro for {service} in {city} ({zip}). Focus on local expertise and trust.' );
 
-        $business_name   = get_option( 'localseo_business_name', '' );
-        $business_phone  = get_option( 'localseo_business_phone', '' );
-        $og_image        = get_option( 'localseo_og_image', '' );
-        $schema_type     = get_option( 'localseo_schema_type', 'LocalBusiness' );
-        $robots          = get_option( 'localseo_robots', 'index, follow' );
-        $schema_enabled  = get_option( 'localseo_schema_enabled', '1' );
-        $sitemap_enabled = get_option( 'localseo_sitemap_enabled', '1' );
-        $response_time   = get_option( 'localseo_response_time', '60' );
+        $business_name       = get_option( 'localseo_business_name', '' );
+        $business_phone      = get_option( 'localseo_business_phone', '' );
+        $og_image            = get_option( 'localseo_og_image', '' );
+        $schema_type         = get_option( 'localseo_schema_type', 'LocalBusiness' );
+        $robots              = get_option( 'localseo_robots', 'index, follow' );
+        $schema_enabled      = get_option( 'localseo_schema_enabled', '1' );
+        $sitemap_enabled     = get_option( 'localseo_sitemap_enabled', '1' );
+        $response_time       = get_option( 'localseo_response_time', '60' );
         $customer_count_text = get_option( 'localseo_customer_count_text', '' );
+        $robots_txt          = get_option( 'localseo_robots_txt', '' );
 
         ?>
         <div class="wrap">
@@ -287,6 +307,22 @@ class Admin {
                                 <?php _e( 'Include LocalSEO pages in the WordPress XML sitemap', 'localseo-booster' ); ?>
                             </label>
                             <p class="description"><?php printf( __( 'Sitemap index: <a href="%s" target="_blank">%s</a>', 'localseo-booster' ), esc_url( home_url( '/wp-sitemap.xml' ) ), esc_html( home_url( '/wp-sitemap.xml' ) ) ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <h2><?php _e( 'Robots.txt', 'localseo-booster' ); ?></h2>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="robots_txt"><?php _e( 'Additional Rules', 'localseo-booster' ); ?></label>
+                        </th>
+                        <td>
+                            <textarea name="robots_txt" id="robots_txt" rows="8" class="large-text code"><?php echo esc_textarea( $robots_txt ); ?></textarea>
+                            <p class="description">
+                                <?php _e( 'These rules are appended to the WordPress-generated robots.txt.', 'localseo-booster' ); ?>
+                                <?php printf( __( '<a href="%s" target="_blank">View current robots.txt &rarr;</a>', 'localseo-booster' ), esc_url( home_url( '/robots.txt' ) ) ); ?>
+                            </p>
                         </td>
                     </tr>
                 </table>

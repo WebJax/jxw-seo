@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from '@wordpress/element';
+import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
 import { Button, Spinner, Notice, Modal } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
@@ -42,6 +42,8 @@ const DataCenter = () => {
     const [generatingAI, setGeneratingAI] = useState(new Set());
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [bulkProgress, setBulkProgress] = useState(null);
+    const [importing, setImporting] = useState(false);
+    const importFileRef = useRef(null);
 
     // Fetch data from API
     const fetchData = async () => {
@@ -214,6 +216,41 @@ const DataCenter = () => {
             setBulkProgress(null);
             setSuccess(__(`Generated ${successCount} items. Failed: ${failedCount}`, 'localseo-booster'));
         }, 1000);
+    };
+
+    // Export CSV – opens the admin-post download URL
+    const handleExportCSV = () => {
+        window.location.href = localSEOData.exportUrl;
+    };
+
+    // Import CSV – read the file client-side, POST content to REST API
+    const handleImportFile = async ( event ) => {
+        const file = event.target.files[ 0 ];
+        if ( ! file ) return;
+
+        // Reset the input so the same file can be selected again later
+        event.target.value = '';
+
+        setImporting( true );
+        setError( null );
+
+        try {
+            const text = await file.text();
+            const response = await apiFetch( {
+                path: '/localseo/v1/import-csv',
+                method: 'POST',
+                data: { csv: text },
+            } );
+            setSuccess(
+                /* translators: 1: number of imported rows, 2: number of skipped rows */
+                __( 'Imported ' + response.imported + ' rows. Skipped: ' + response.skipped, 'localseo-booster' )
+            );
+            fetchData();
+        } catch ( err ) {
+            setError( err.message );
+        } finally {
+            setImporting( false );
+        }
     };
 
     // Define columns
@@ -581,6 +618,19 @@ const DataCenter = () => {
                 <Button variant="secondary" onClick={bulkGenerateAI} disabled={bulkProgress !== null}>
                     {bulkProgress ? __('Generating...', 'localseo-booster') : __('Generate All Missing AI Fields', 'localseo-booster')}
                 </Button>
+                <Button variant="secondary" onClick={handleExportCSV} disabled={bulkProgress !== null || importing}>
+                    {__('Export CSV', 'localseo-booster')}
+                </Button>
+                <Button variant="secondary" onClick={() => importFileRef.current && importFileRef.current.click()} disabled={bulkProgress !== null || importing}>
+                    {importing ? __('Importing...', 'localseo-booster') : __('Import CSV', 'localseo-booster')}
+                </Button>
+                <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    ref={importFileRef}
+                    style={{ display: 'none' }}
+                    onChange={handleImportFile}
+                />
                 <Button variant="tertiary" onClick={fetchData} disabled={bulkProgress !== null}>
                     {__('Refresh', 'localseo-booster')}
                 </Button>

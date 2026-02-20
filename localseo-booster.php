@@ -86,6 +86,7 @@ function localseo_init() {
     require_once LOCALSEO_PLUGIN_DIR . 'includes/class-sitemap.php';
     require_once LOCALSEO_PLUGIN_DIR . 'includes/class-schema.php';
     require_once LOCALSEO_PLUGIN_DIR . 'includes/class-meta-box.php';
+    require_once LOCALSEO_PLUGIN_DIR . 'includes/class-redirects.php';
 
     // Initialize components
     new LocalSEO\Admin();
@@ -96,4 +97,5 @@ function localseo_init() {
     new LocalSEO\Sitemap();
     new LocalSEO\Schema();
     new LocalSEO\Meta_Box();
+    new LocalSEO\Redirects();
 }

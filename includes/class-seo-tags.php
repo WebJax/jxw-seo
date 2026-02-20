@@ -58,7 +58,7 @@ class SEO_Tags {
             return;
         }
 
-        if ( empty( $data->custom_slug ) ) {
+        if ( empty( $data->service_keyword ) || empty( $data->city ) ) {
             return;
         }
 

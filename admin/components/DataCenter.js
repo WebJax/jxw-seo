@@ -14,6 +14,12 @@ const columnHelper = createColumnHelper();
 /**
  * Convert a string to a URL-safe slug (approximates WordPress sanitize_title).
  *
+ * Note: This is a client-side approximation. WordPress's sanitize_title also
+ * converts accented/special characters (e.g., 'ø' → 'oe', 'å' → 'a'), so
+ * the preview URL may differ from the actual server-side URL for inputs that
+ * contain non-ASCII characters (e.g., Danish city names like "København").
+ * The actual page URL is always authoritative.
+ *
  * @param {string} str
  * @return {string}
  */
@@ -333,7 +339,7 @@ const DataCenter = () => {
             size: 150,
         }),
         columnHelper.accessor('custom_slug', {
-            header: __('Slug', 'localseo-booster'),
+            header: __('Page URL', 'localseo-booster'),
             cell: info => {
                 const row = info.row.original;
                 const service = toSlug( row.service_keyword );
@@ -341,7 +347,7 @@ const DataCenter = () => {
                 const url     = service && city ? `/service/${ service }/${ city }/` : null;
                 return url ? (
                     <a href={ url } target="_blank" rel="noopener noreferrer">
-                        { info.getValue() || `${ service }/${ city }` }
+                        { `${ service }/${ city }` }
                     </a>
                 ) : (
                     <em>{ __( 'Auto-generated', 'localseo-booster' ) }</em>

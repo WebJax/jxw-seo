@@ -110,7 +110,7 @@ class Router {
         }
 
         if ( $service && $city ) {
-            return $this->db->get_by_city_service( $city, $service );
+            return $this->db->get_by_service_city_slugs( $service, $city );
         }
 
         return null;
@@ -129,11 +129,23 @@ class Router {
      * Uses /service/{service_keyword}/{city}/ structure.
      *
      * @param object $data LocalSEO row (needs service_keyword and city).
-     * @return string
+     * @return string home_url('/') when either field is empty after sanitization.
      */
     public static function get_page_url( $data ) {
-        $service = sanitize_title( $data->service_keyword ?? '' );
-        $city    = sanitize_title( $data->city ?? '' );
+        $raw_service = isset( $data->service_keyword ) ? trim( (string) $data->service_keyword ) : '';
+        $raw_city    = isset( $data->city ) ? trim( (string) $data->city ) : '';
+
+        if ( $raw_service === '' || $raw_city === '' ) {
+            return home_url( '/' );
+        }
+
+        $service = sanitize_title( $raw_service );
+        $city    = sanitize_title( $raw_city );
+
+        if ( $service === '' || $city === '' ) {
+            return home_url( '/' );
+        }
+
         return home_url( '/service/' . $service . '/' . $city . '/' );
     }
 }

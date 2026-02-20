@@ -43,7 +43,7 @@ class Sitemap_Provider extends \WP_Sitemaps_Provider {
                 continue;
             }
             $entry = [
-                'loc' => home_url( '/service/' . sanitize_title( $row->service_keyword ) . '/' . sanitize_title( $row->city ) . '/' ),
+                'loc' => \LocalSEO\Router::get_page_url( $row ),
             ];
             if ( ! empty( $row->updated_at ) ) {
                 $entry['lastmod'] = gmdate( 'c', strtotime( $row->updated_at ) );

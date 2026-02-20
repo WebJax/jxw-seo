@@ -67,10 +67,18 @@ function localseo_init() {
     require_once LOCALSEO_PLUGIN_DIR . 'includes/class-block-bindings.php';
     require_once LOCALSEO_PLUGIN_DIR . 'includes/class-ai-engine.php';
     require_once LOCALSEO_PLUGIN_DIR . 'includes/class-rest-api.php';
+    require_once LOCALSEO_PLUGIN_DIR . 'includes/class-seo-tags.php';
+    require_once LOCALSEO_PLUGIN_DIR . 'includes/class-sitemap.php';
+    require_once LOCALSEO_PLUGIN_DIR . 'includes/class-schema.php';
+    require_once LOCALSEO_PLUGIN_DIR . 'includes/class-meta-box.php';
 
     // Initialize components
     new LocalSEO\Admin();
     new LocalSEO\Router();
     new LocalSEO\Block_Bindings();
     new LocalSEO\REST_API();
+    new LocalSEO\SEO_Tags();
+    new LocalSEO\Sitemap();
+    new LocalSEO\Schema();
+    new LocalSEO\Meta_Box();
 }

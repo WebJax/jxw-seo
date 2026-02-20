@@ -73,18 +73,6 @@ class Router {
         global $localseo_current_data;
         $localseo_current_data = $data;
 
-        // Set document title
-        add_filter( 'pre_get_document_title', function() use ( $data ) {
-            return $data->meta_title ?: ( $data->service_keyword . ' in ' . $data->city );
-        });
-
-        // Set meta description
-        add_action( 'wp_head', function() use ( $data ) {
-            if ( $data->meta_description ) {
-                echo '<meta name="description" content="' . esc_attr( $data->meta_description ) . '">' . "\n";
-            }
-        });
-
         // Look for block template
         $block_template = locate_template( 'templates/single-localseo.html' );
         

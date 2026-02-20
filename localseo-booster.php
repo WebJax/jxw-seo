@@ -57,6 +57,15 @@ function localseo_deactivate_plugin() {
     LocalSEO\Deactivator::deactivate();
 }
 
+// Run database migrations when needed (non-destructive, adds missing columns only)
+add_action( 'plugins_loaded', 'localseo_maybe_run_migrations', 5 );
+function localseo_maybe_run_migrations() {
+    if ( get_option( 'localseo_db_version', '0' ) !== '1.1' ) {
+        require_once LOCALSEO_PLUGIN_DIR . 'includes/class-activator.php';
+        LocalSEO\Activator::maybe_upgrade_database();
+    }
+}
+
 // Initialize the plugin
 add_action( 'plugins_loaded', 'localseo_init' );
 function localseo_init() {

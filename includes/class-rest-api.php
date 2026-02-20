@@ -92,6 +92,8 @@ class REST_API {
             'ai_generated_intro' => sanitize_textarea_field( $params['ai_generated_intro'] ?? '' ),
             'meta_title' => sanitize_text_field( $params['meta_title'] ?? '' ),
             'meta_description' => sanitize_textarea_field( $params['meta_description'] ?? '' ),
+            'nearby_cities' => sanitize_text_field( $params['nearby_cities'] ?? '' ),
+            'local_landmarks' => sanitize_textarea_field( $params['local_landmarks'] ?? '' ),
         ];
 
         $id = $this->db->insert( $data );
@@ -112,11 +114,11 @@ class REST_API {
         $params = $request->get_json_params();
 
         $data = [];
-        $allowed_fields = [ 'city', 'zip', 'service_keyword', 'custom_slug', 'ai_generated_intro', 'meta_title', 'meta_description' ];
+        $allowed_fields = [ 'city', 'zip', 'service_keyword', 'custom_slug', 'ai_generated_intro', 'meta_title', 'meta_description', 'nearby_cities', 'local_landmarks' ];
 
         foreach ( $allowed_fields as $field ) {
             if ( isset( $params[ $field ] ) ) {
-                if ( in_array( $field, [ 'ai_generated_intro', 'meta_description' ] ) ) {
+                if ( in_array( $field, [ 'ai_generated_intro', 'meta_description', 'local_landmarks' ] ) ) {
                     $data[ $field ] = sanitize_textarea_field( $params[ $field ] );
                 } elseif ( $field === 'custom_slug' ) {
                     $data[ $field ] = sanitize_title( $params[ $field ] );

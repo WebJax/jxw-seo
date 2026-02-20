@@ -35,6 +35,8 @@ class Activator {
             ai_generated_intro text DEFAULT '',
             meta_title varchar(255) DEFAULT '',
             meta_description varchar(500) DEFAULT '',
+            nearby_cities varchar(500) DEFAULT '',
+            local_landmarks text DEFAULT '',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -46,7 +48,45 @@ class Activator {
         dbDelta( $sql );
 
         // Store the database version
-        update_option( 'localseo_db_version', '1.0' );
+        update_option( 'localseo_db_version', '1.1' );
+    }
+
+    /**
+     * Run database migrations for existing installations.
+     * Adds columns introduced after the initial release.
+     */
+    public static function maybe_upgrade_database() {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'localseo_data';
+
+        // Guard: table must exist before we can ALTER it
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $table_exists = $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = %s AND table_name = %s",
+            DB_NAME,
+            $table
+        ) );
+
+        if ( ! $table_exists ) {
+            // Table doesn't exist yet – full activation will create it with all columns.
+            return;
+        }
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $columns = $wpdb->get_col( "DESCRIBE `{$table}`", 0 );
+
+        if ( ! in_array( 'nearby_cities', $columns, true ) ) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN nearby_cities varchar(500) NOT NULL DEFAULT '' AFTER meta_description" );
+        }
+
+        if ( ! in_array( 'local_landmarks', $columns, true ) ) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN local_landmarks text NOT NULL DEFAULT '' AFTER nearby_cities" );
+        }
+
+        update_option( 'localseo_db_version', '1.1' );
     }
 
     /**

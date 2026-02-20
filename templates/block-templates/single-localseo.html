@@ -1,39 +1,105 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
-<!-- wp:group {"layout":{"type":"constrained"}} -->
-<div class="wp-block-group">
-    <!-- wp:heading {"metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"service"}}}}} -->
-    <h2 class="wp-block-heading">Service in City</h2>
-    <!-- /wp:heading -->
+<!-- wp:group {"tagName":"article","className":"localseo-page localseo-mastertemplate","layout":{"type":"constrained"}} -->
+<article class="wp-block-group localseo-page localseo-mastertemplate">
 
-    <!-- wp:paragraph {"metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"intro_text"}}}}} -->
-    <p>AI-generated introduction will appear here...</p>
-    <!-- /wp:paragraph -->
+    <!-- 1. HERO ─────────────────────────────────────────────────────────── -->
+    <!-- wp:group {"tagName":"section","className":"localseo-hero","layout":{"type":"constrained"}} -->
+    <section class="wp-block-group localseo-hero">
 
-    <!-- wp:separator -->
-    <hr class="wp-block-separator has-alpha-channel-opacity"/>
-    <!-- /wp:separator -->
+        <!-- wp:heading {"level":1,"className":"localseo-hero__title","metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"service"}}}}} -->
+        <h1 class="wp-block-heading localseo-hero__title">Service i By – Hurtig hjælp og lokale eksperter</h1>
+        <!-- /wp:heading -->
 
-    <!-- wp:heading {"level":3} -->
-    <h3 class="wp-block-heading">Service Details</h3>
-    <!-- /wp:heading -->
+        <!-- wp:paragraph {"className":"localseo-hero__subtitle","metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"zip"}}}}} -->
+        <p class="localseo-hero__subtitle">ZIP – By og lokalområder</p>
+        <!-- /wp:paragraph -->
 
-    <!-- wp:paragraph -->
-    <p><strong>City:</strong></p>
-    <!-- /wp:paragraph -->
+    </section>
+    <!-- /wp:group -->
 
-    <!-- wp:paragraph {"metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"city"}}}}} -->
-    <p>City Name</p>
-    <!-- /wp:paragraph -->
+    <!-- 2. LOCAL RELEVANCE ──────────────────────────────────────────────── -->
+    <!-- wp:group {"tagName":"section","className":"localseo-local-relevance","layout":{"type":"constrained"}} -->
+    <section class="wp-block-group localseo-local-relevance">
 
-    <!-- wp:paragraph -->
-    <p><strong>ZIP Code:</strong></p>
-    <!-- /wp:paragraph -->
+        <!-- wp:heading {"level":2} -->
+        <h2 class="wp-block-heading">Din lokale ekspert</h2>
+        <!-- /wp:heading -->
 
-    <!-- wp:paragraph {"metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"zip"}}}}} -->
-    <p>ZIP</p>
-    <!-- /wp:paragraph -->
-</div>
+        <!-- wp:paragraph {"className":"localseo-landmarks","metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"local_landmarks"}}}}} -->
+        <p class="localseo-landmarks">Lokale vartegn og steder...</p>
+        <!-- /wp:paragraph -->
+
+        <!-- wp:paragraph {"className":"localseo-intro","metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"intro_text"}}}}} -->
+        <p class="localseo-intro">AI-genereret introduktion vises her...</p>
+        <!-- /wp:paragraph -->
+
+        <!-- wp:paragraph {"className":"localseo-nearby-links","metadata":{"bindings":{"content":{"source":"localseo/data","args":{"key":"nearby_cities"}}}}} -->
+        <p class="localseo-nearby-links">Vi kører også i: Nærliggende byer...</p>
+        <!-- /wp:paragraph -->
+
+    </section>
+    <!-- /wp:group -->
+
+    <!-- 3. SERVICE DESCRIPTION ──────────────────────────────────────────── -->
+    <!-- wp:group {"tagName":"section","className":"localseo-services","layout":{"type":"constrained"}} -->
+    <section class="wp-block-group localseo-services">
+
+        <!-- wp:heading {"level":2} -->
+        <h2 class="wp-block-heading">Vores ydelser</h2>
+        <!-- /wp:heading -->
+
+        <!-- wp:list {"className":"localseo-services__list"} -->
+        <ul class="wp-block-list localseo-services__list">
+            <!-- wp:list-item -->
+            <li>Service i By</li>
+            <!-- /wp:list-item -->
+            <!-- wp:list-item -->
+            <li>TV-inspektion og fejlfinding</li>
+            <!-- /wp:list-item -->
+            <!-- wp:list-item -->
+            <li>Akut hjælp – vi er klar døgnet rundt</li>
+            <!-- /wp:list-item -->
+            <!-- wp:list-item -->
+            <li>Forebyggende vedligehold og service</li>
+            <!-- /wp:list-item -->
+        </ul>
+        <!-- /wp:list -->
+
+    </section>
+    <!-- /wp:group -->
+
+    <!-- 4. SOCIAL PROOF ─────────────────────────────────────────────────── -->
+    <!-- wp:group {"tagName":"section","className":"localseo-social-proof","layout":{"type":"constrained"}} -->
+    <section class="wp-block-group localseo-social-proof">
+
+        <!-- wp:heading {"level":2} -->
+        <h2 class="wp-block-heading">Tillid og erfaring</h2>
+        <!-- /wp:heading -->
+
+        <!-- wp:paragraph {"className":"localseo-trust-text"} -->
+        <p class="localseo-trust-text">Vi er certificerede, forsikrede og arbejder kun med kvalitetsmaterialer.</p>
+        <!-- /wp:paragraph -->
+
+    </section>
+    <!-- /wp:group -->
+
+    <!-- 5. CALL TO ACTION ───────────────────────────────────────────────── -->
+    <!-- wp:group {"tagName":"section","className":"localseo-cta","layout":{"type":"constrained"}} -->
+    <section class="wp-block-group localseo-cta">
+
+        <!-- wp:heading {"level":2} -->
+        <h2 class="wp-block-heading">Kontakt os i dag</h2>
+        <!-- /wp:heading -->
+
+        <!-- wp:paragraph -->
+        <p>Ring til os for et uforpligtende tilbud.</p>
+        <!-- /wp:paragraph -->
+
+    </section>
+    <!-- /wp:group -->
+
+</article>
 <!-- /wp:group -->
 
 <!-- wp:template-part {"slug":"footer","tagName":"footer"} /-->

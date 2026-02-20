@@ -61,6 +61,8 @@ class Block_Bindings {
             'meta_title' => 'meta_title',
             'meta_description' => 'meta_description',
             'slug' => 'custom_slug',
+            'nearby_cities' => 'nearby_cities',
+            'local_landmarks' => 'local_landmarks',
         ];
 
         $field = $field_map[ $key ] ?? $key;

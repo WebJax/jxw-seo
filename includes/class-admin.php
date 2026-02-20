@@ -123,6 +123,8 @@ class Admin {
             update_option( 'localseo_business_name', sanitize_text_field( $_POST['business_name'] ?? '' ) );
             update_option( 'localseo_business_phone', sanitize_text_field( $_POST['business_phone'] ?? '' ) );
             update_option( 'localseo_og_image', esc_url_raw( $_POST['og_image'] ?? '' ) );
+            update_option( 'localseo_response_time', sanitize_text_field( $_POST['response_time'] ?? '60' ) );
+            update_option( 'localseo_customer_count_text', sanitize_text_field( $_POST['customer_count_text'] ?? '' ) );
 
             $allowed_schema_types = [ 'LocalBusiness', 'Service', 'ProfessionalService', 'HomeAndConstructionBusiness' ];
             $schema_type_raw = sanitize_text_field( $_POST['schema_type'] ?? 'LocalBusiness' );
@@ -148,6 +150,8 @@ class Admin {
         $robots          = get_option( 'localseo_robots', 'index, follow' );
         $schema_enabled  = get_option( 'localseo_schema_enabled', '1' );
         $sitemap_enabled = get_option( 'localseo_sitemap_enabled', '1' );
+        $response_time   = get_option( 'localseo_response_time', '60' );
+        $customer_count_text = get_option( 'localseo_customer_count_text', '' );
 
         ?>
         <div class="wrap">
@@ -209,6 +213,24 @@ class Admin {
                         <td>
                             <input type="text" name="business_phone" id="business_phone" value="<?php echo esc_attr( $business_phone ); ?>" class="regular-text" />
                             <p class="description"><?php _e( 'Added to Schema.org LocalBusiness/Service markup.', 'localseo-booster' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="response_time"><?php _e( 'Response Time (minutes)', 'localseo-booster' ); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" name="response_time" id="response_time" value="<?php echo esc_attr( $response_time ); ?>" class="small-text" />
+                            <p class="description"><?php _e( 'Typical response time shown on landing pages, e.g. "60". Used in the mastertemplate CTA section.', 'localseo-booster' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="customer_count_text"><?php _e( 'Customers Served (text)', 'localseo-booster' ); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" name="customer_count_text" id="customer_count_text" value="<?php echo esc_attr( $customer_count_text ); ?>" class="regular-text" />
+                            <p class="description"><?php _e( 'Number shown in social-proof section, e.g. "200+" or "over 500". Leave blank to hide the sentence.', 'localseo-booster' ); ?></p>
                         </td>
                     </tr>
                     <tr>

@@ -102,6 +102,8 @@ const DataCenter = () => {
                     ai_generated_intro: '',
                     meta_title: '',
                     meta_description: '',
+                    nearby_cities: '',
+                    local_landmarks: '',
                 },
             });
             
@@ -357,6 +359,86 @@ const DataCenter = () => {
                 );
             },
             size: 150,
+        }),
+        columnHelper.accessor('nearby_cities', {
+            header: __('Nearby Cities', 'localseo-booster'),
+            cell: info => {
+                const rowId = info.row.original.id;
+                const value = info.getValue();
+                const isEditing = editingCell === `${rowId}-nearby_cities`;
+
+                return isEditing ? (
+                    <input
+                        type="text"
+                        value={value || ''}
+                        onChange={e => {
+                            const newValue = e.target.value;
+                            setData(prevData =>
+                                prevData.map(row =>
+                                    row.id === rowId ? { ...row, nearby_cities: newValue } : row
+                                )
+                            );
+                        }}
+                        onBlur={() => {
+                            setEditingCell(null);
+                            updateCell(rowId, 'nearby_cities', value);
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                setEditingCell(null);
+                                updateCell(rowId, 'nearby_cities', value);
+                            }
+                        }}
+                        autoFocus
+                        placeholder={__('e.g. Niløse, Tersløse', 'localseo-booster')}
+                    />
+                ) : (
+                    <div onClick={() => setEditingCell(`${rowId}-nearby_cities`)}>
+                        {value || <em>{__('Click to edit', 'localseo-booster')}</em>}
+                    </div>
+                );
+            },
+            size: 180,
+        }),
+        columnHelper.accessor('local_landmarks', {
+            header: __('Local Landmarks', 'localseo-booster'),
+            cell: info => {
+                const rowId = info.row.original.id;
+                const value = info.getValue();
+                const isEditing = editingCell === `${rowId}-local_landmarks`;
+
+                return isEditing ? (
+                    <input
+                        type="text"
+                        value={value || ''}
+                        onChange={e => {
+                            const newValue = e.target.value;
+                            setData(prevData =>
+                                prevData.map(row =>
+                                    row.id === rowId ? { ...row, local_landmarks: newValue } : row
+                                )
+                            );
+                        }}
+                        onBlur={() => {
+                            setEditingCell(null);
+                            updateCell(rowId, 'local_landmarks', value);
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                setEditingCell(null);
+                                updateCell(rowId, 'local_landmarks', value);
+                            }
+                        }}
+                        autoFocus
+                        placeholder={__('e.g. Dianalund Centret', 'localseo-booster')}
+                    />
+                ) : (
+                    <div onClick={() => setEditingCell(`${rowId}-local_landmarks`)}>
+                        {value || <em>{__('Click to edit', 'localseo-booster')}</em>}
+                    </div>
+                );
+            },
+            size: 200,
         }),
         columnHelper.display({
             id: 'actions',

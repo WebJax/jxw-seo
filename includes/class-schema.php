@@ -36,7 +36,7 @@ class Schema {
         $business_name  = get_option( 'localseo_business_name', get_bloginfo( 'name' ) );
         $business_phone = get_option( 'localseo_business_phone', '' );
         $og_image       = get_option( 'localseo_og_image', '' );
-        $canonical      = home_url( '/localseo/' . $data->custom_slug . '/' );
+        $canonical      = Router::get_page_url( $data );
         $description    = ! empty( $data->meta_description ) ? $data->meta_description : '';
         $service        = ! empty( $data->service_keyword ) ? $data->service_keyword : '';
         $city           = ! empty( $data->city ) ? $data->city : '';
@@ -178,7 +178,7 @@ class Schema {
                     '@type'    => 'ListItem',
                     'position' => 2,
                     'name'     => $label ?: $data->custom_slug,
-                    'item'     => home_url( '/localseo/' . $data->custom_slug . '/' ),
+                    'item'     => Router::get_page_url( $data ),
                 ],
             ],
         ];

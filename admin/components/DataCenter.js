@@ -11,6 +11,22 @@ import {
 
 const columnHelper = createColumnHelper();
 
+/**
+ * Convert a string to a URL-safe slug (approximates WordPress sanitize_title).
+ *
+ * @param {string} str
+ * @return {string}
+ */
+const toSlug = ( str ) =>
+    str
+        ? str
+              .toLowerCase()
+              .replace( /\s+/g, '-' )
+              .replace( /[^a-z0-9-]/g, '' )
+              .replace( /-+/g, '-' )
+              .replace( /^-|-$/g, '' )
+        : '';
+
 const DataCenter = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -319,13 +335,16 @@ const DataCenter = () => {
         columnHelper.accessor('custom_slug', {
             header: __('Slug', 'localseo-booster'),
             cell: info => {
-                const value = info.getValue();
-                return value ? (
-                    <a href={`/localseo/${value}`} target="_blank" rel="noopener noreferrer">
-                        {value}
+                const row = info.row.original;
+                const service = toSlug( row.service_keyword );
+                const city    = toSlug( row.city );
+                const url     = service && city ? `/service/${ service }/${ city }/` : null;
+                return url ? (
+                    <a href={ url } target="_blank" rel="noopener noreferrer">
+                        { info.getValue() || `${ service }/${ city }` }
                     </a>
                 ) : (
-                    <em>{__('Auto-generated', 'localseo-booster')}</em>
+                    <em>{ __( 'Auto-generated', 'localseo-booster' ) }</em>
                 );
             },
             size: 150,

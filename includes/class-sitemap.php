@@ -32,18 +32,18 @@ class Sitemap_Provider extends \WP_Sitemaps_Provider {
         $table = $wpdb->prefix . 'localseo_data';
 
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT custom_slug, updated_at FROM {$table} ORDER BY id ASC LIMIT %d OFFSET %d",
+            "SELECT service_keyword, city, updated_at FROM {$table} ORDER BY id ASC LIMIT %d OFFSET %d",
             $per_page,
             $offset
         ) );
 
         $urls = [];
         foreach ( $rows as $row ) {
-            if ( empty( $row->custom_slug ) ) {
+            if ( empty( $row->service_keyword ) || empty( $row->city ) ) {
                 continue;
             }
             $entry = [
-                'loc' => home_url( '/localseo/' . $row->custom_slug . '/' ),
+                'loc' => home_url( '/service/' . sanitize_title( $row->service_keyword ) . '/' . sanitize_title( $row->city ) . '/' ),
             ];
             if ( ! empty( $row->updated_at ) ) {
                 $entry['lastmod'] = gmdate( 'c', strtotime( $row->updated_at ) );

@@ -123,8 +123,14 @@ class Admin {
             update_option( 'localseo_business_name', sanitize_text_field( $_POST['business_name'] ?? '' ) );
             update_option( 'localseo_business_phone', sanitize_text_field( $_POST['business_phone'] ?? '' ) );
             update_option( 'localseo_og_image', esc_url_raw( $_POST['og_image'] ?? '' ) );
-            update_option( 'localseo_schema_type', sanitize_text_field( $_POST['schema_type'] ?? 'LocalBusiness' ) );
-            update_option( 'localseo_robots', sanitize_text_field( $_POST['robots'] ?? 'index, follow' ) );
+
+            $allowed_schema_types = [ 'LocalBusiness', 'Service', 'ProfessionalService', 'HomeAndConstructionBusiness' ];
+            $schema_type_raw = sanitize_text_field( $_POST['schema_type'] ?? 'LocalBusiness' );
+            update_option( 'localseo_schema_type', in_array( $schema_type_raw, $allowed_schema_types, true ) ? $schema_type_raw : 'LocalBusiness' );
+
+            $allowed_robots = [ 'index, follow', 'noindex, follow', 'index, nofollow', 'noindex, nofollow' ];
+            $robots_raw = sanitize_text_field( $_POST['robots'] ?? 'index, follow' );
+            update_option( 'localseo_robots', in_array( $robots_raw, $allowed_robots, true ) ? $robots_raw : 'index, follow' );
             update_option( 'localseo_schema_enabled', ! empty( $_POST['schema_enabled'] ) ? '1' : '0' );
             update_option( 'localseo_sitemap_enabled', ! empty( $_POST['sitemap_enabled'] ) ? '1' : '0' );
 

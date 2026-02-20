@@ -12,12 +12,9 @@ namespace LocalSEO;
  * Provides sitemap entries for LocalSEO virtual pages.
  */
 class Sitemap_Provider extends \WP_Sitemaps_Provider {
-    private $db;
-
-    public function __construct( $db ) {
+    public function __construct() {
         $this->name        = 'localseo-pages';
         $this->object_type = 'localseo_page';
-        $this->db          = $db;
     }
 
     /**
@@ -32,10 +29,10 @@ class Sitemap_Provider extends \WP_Sitemaps_Provider {
         $offset   = ( $page_num - 1 ) * $per_page;
 
         global $wpdb;
-        $table = esc_sql( $wpdb->prefix . 'localseo_data' );
+        $table = $wpdb->prefix . 'localseo_data';
 
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT custom_slug, updated_at FROM `{$table}` ORDER BY id ASC LIMIT %d OFFSET %d",
+            "SELECT custom_slug, updated_at FROM {$table} ORDER BY id ASC LIMIT %d OFFSET %d",
             $per_page,
             $offset
         ) );
@@ -65,8 +62,8 @@ class Sitemap_Provider extends \WP_Sitemaps_Provider {
      */
     public function get_max_num_pages( $object_subtype = '' ) {
         global $wpdb;
-        $table = esc_sql( $wpdb->prefix . 'localseo_data' );
-        $count = (int) $wpdb->get_var( "SELECT COUNT(id) FROM `{$table}`" );
+        $table = $wpdb->prefix . 'localseo_data';
+        $count = (int) $wpdb->get_var( "SELECT COUNT(id) FROM {$table}" );
 
         return (int) ceil( $count / $this->get_sitemap_entries_per_page() );
     }
@@ -76,10 +73,7 @@ class Sitemap_Provider extends \WP_Sitemaps_Provider {
  * Main Sitemap integration class.
  */
 class Sitemap {
-    private $db;
-
     public function __construct() {
-        $this->db = new Database();
         add_action( 'init', [ $this, 'register_provider' ] );
     }
 
@@ -98,7 +92,7 @@ class Sitemap {
 
         $server = wp_sitemaps_get_server();
         if ( $server && isset( $server->registry ) ) {
-            $server->registry->add_provider( 'localseo-pages', new Sitemap_Provider( $this->db ) );
+            $server->registry->add_provider( 'localseo-pages', new Sitemap_Provider() );
         }
     }
 }

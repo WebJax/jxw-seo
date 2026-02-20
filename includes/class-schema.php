@@ -22,22 +22,28 @@ class Schema {
             return;
         }
 
+        if ( empty( $data->custom_slug ) ) {
+            return;
+        }
+
         $enabled = get_option( 'localseo_schema_enabled', '1' );
         if ( '1' !== $enabled ) {
             return;
         }
 
-        $schema_type   = get_option( 'localseo_schema_type', 'LocalBusiness' );
-        $business_name = get_option( 'localseo_business_name', get_bloginfo( 'name' ) );
+        $schema_type    = get_option( 'localseo_schema_type', 'LocalBusiness' );
+        $business_name  = get_option( 'localseo_business_name', get_bloginfo( 'name' ) );
         $business_phone = get_option( 'localseo_business_phone', '' );
-        $og_image      = get_option( 'localseo_og_image', '' );
-        $canonical     = home_url( '/localseo/' . $data->custom_slug . '/' );
-        $description   = ! empty( $data->meta_description ) ? $data->meta_description : '';
+        $og_image       = get_option( 'localseo_og_image', '' );
+        $canonical      = home_url( '/localseo/' . $data->custom_slug . '/' );
+        $description    = ! empty( $data->meta_description ) ? $data->meta_description : '';
+        $service        = ! empty( $data->service_keyword ) ? $data->service_keyword : '';
+        $city           = ! empty( $data->city ) ? $data->city : '';
 
         $schema = [
             '@context' => 'https://schema.org',
             '@type'    => $schema_type,
-            'name'     => $business_name . ' – ' . $data->service_keyword,
+            'name'     => trim( $business_name . ( $service ? ' – ' . $service : '' ) ),
             'url'      => $canonical,
         ];
 
@@ -52,7 +58,7 @@ class Schema {
         // Address / location info
         $schema['address'] = [
             '@type'           => 'PostalAddress',
-            'addressLocality' => $data->city,
+            'addressLocality' => $city,
         ];
 
         if ( ! empty( $data->zip ) ) {
@@ -65,15 +71,15 @@ class Schema {
 
         // Add areaServed for LocalBusiness and its subtypes
         $local_business_types = [ 'LocalBusiness', 'Service', 'ProfessionalService', 'HomeAndConstructionBusiness' ];
-        if ( in_array( $schema_type, $local_business_types, true ) ) {
+        if ( $city && in_array( $schema_type, $local_business_types, true ) ) {
             $schema['areaServed'] = [
                 '@type' => 'City',
-                'name'  => $data->city,
+                'name'  => $city,
             ];
         }
 
         // Add breadcrumb list
-        $breadcrumb = $this->build_breadcrumb( $data );
+        $breadcrumb = $this->build_breadcrumb( $data, $service, $city );
         if ( $breadcrumb ) {
             $schema['breadcrumb'] = $breadcrumb;
         }
@@ -86,10 +92,13 @@ class Schema {
     /**
      * Build a BreadcrumbList schema array.
      *
-     * @param object $data LocalSEO row data.
+     * @param object $data    LocalSEO row data.
+     * @param string $service Service keyword (pre-validated).
+     * @param string $city    City name (pre-validated).
      * @return array
      */
-    private function build_breadcrumb( $data ) {
+    private function build_breadcrumb( $data, $service, $city ) {
+        $label = trim( $service . ( $city ? ' in ' . $city : '' ) );
         return [
             '@type'           => 'BreadcrumbList',
             'itemListElement' => [
@@ -102,7 +111,7 @@ class Schema {
                 [
                     '@type'    => 'ListItem',
                     'position' => 2,
-                    'name'     => $data->service_keyword . ' in ' . $data->city,
+                    'name'     => $label ?: $data->custom_slug,
                     'item'     => home_url( '/localseo/' . $data->custom_slug . '/' ),
                 ],
             ],

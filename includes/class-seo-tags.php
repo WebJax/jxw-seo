@@ -30,7 +30,10 @@ class SEO_Tags {
             return $data->meta_title;
         }
 
-        return $data->service_keyword . ' in ' . $data->city;
+        $service = ! empty( $data->service_keyword ) ? $data->service_keyword : '';
+        $city    = ! empty( $data->city ) ? $data->city : '';
+
+        return trim( $service . ' in ' . $city, ' in' );
     }
 
     /**
@@ -42,7 +45,13 @@ class SEO_Tags {
             return;
         }
 
-        $title       = ! empty( $data->meta_title ) ? $data->meta_title : ( $data->service_keyword . ' in ' . $data->city );
+        if ( empty( $data->custom_slug ) ) {
+            return;
+        }
+
+        $service = ! empty( $data->service_keyword ) ? $data->service_keyword : '';
+        $city    = ! empty( $data->city ) ? $data->city : '';
+        $title   = ! empty( $data->meta_title ) ? $data->meta_title : trim( $service . ' in ' . $city, ' in' );
         $description = ! empty( $data->meta_description ) ? $data->meta_description : '';
         $canonical   = home_url( '/localseo/' . $data->custom_slug . '/' );
         $og_image    = get_option( 'localseo_og_image', '' );

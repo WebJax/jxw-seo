@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
 import { Button, Spinner, Notice, Modal } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
     useReactTable,
@@ -242,8 +242,12 @@ const DataCenter = () => {
                 data: { csv: text },
             } );
             setSuccess(
-                /* translators: 1: number of imported rows, 2: number of skipped rows */
-                __( 'Imported ' + response.imported + ' rows. Skipped: ' + response.skipped, 'localseo-booster' )
+                sprintf(
+                    /* translators: 1: number of imported rows, 2: number of skipped rows */
+                    __( 'Imported %1$d rows. Skipped: %2$d', 'localseo-booster' ),
+                    response.imported,
+                    response.skipped
+                )
             );
             fetchData();
         } catch ( err ) {

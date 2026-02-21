@@ -66,7 +66,7 @@ function localseo_maybe_run_migrations() {
     }
 
     $db_version = get_option( 'localseo_db_version', '0' );
-    if ( ! $db_version || version_compare( $db_version, '1.1', '<' ) ) {
+    if ( ! $db_version || version_compare( $db_version, '1.2', '<' ) ) {
         require_once LOCALSEO_PLUGIN_DIR . 'includes/class-activator.php';
         LocalSEO\Activator::maybe_upgrade_database();
     }

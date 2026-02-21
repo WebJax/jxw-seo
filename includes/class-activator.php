@@ -49,7 +49,7 @@ class Activator {
         dbDelta( $sql );
 
         // Store the database version
-        update_option( 'localseo_db_version', '1.1' );
+        update_option( 'localseo_db_version', '1.2' );
     }
 
     /**
@@ -87,7 +87,7 @@ class Activator {
             $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN local_landmarks text DEFAULT '' AFTER nearby_cities" );
         }
 
-        update_option( 'localseo_db_version', '1.1' );
+        update_option( 'localseo_db_version', '1.2' );
 
         // Ensure the redirects table exists for installations that pre-date v1.2.
         self::create_redirects_table();

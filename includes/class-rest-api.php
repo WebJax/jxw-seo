@@ -249,28 +249,31 @@ class REST_API {
             );
         }
 
-        // Split into lines; filter out completely blank lines.
-        $lines = array_filter(
-            array_map( 'trim', explode( "\n", str_replace( "\r\n", "\n", $csv_content ) ) )
-        );
+        // Parse the CSV content correctly, handling quoted fields that may span
+        // multiple lines (e.g. meta_description with embedded newlines).
+        $temp = fopen( 'php://temp', 'r+' );
+        fwrite( $temp, $csv_content );
+        rewind( $temp );
 
-        if ( count( $lines ) < 2 ) {
+        // Read the header row.
+        $headers = fgetcsv( $temp );
+        if ( false === $headers || null === $headers ) {
+            fclose( $temp );
             return new \WP_Error(
                 'invalid_csv',
                 __( 'CSV must contain a header row and at least one data row.', 'localseo-booster' ),
                 [ 'status' => 400 ]
             );
         }
-
-        // Parse header row; sanitize header names to alphanumeric + underscores only.
-        $headers = str_getcsv( array_shift( $lines ) );
+        // Sanitize header names to alphanumeric + underscores only.
         $headers = array_map( function( $h ) {
-            return preg_replace( '/[^a-z0-9_]/', '', strtolower( trim( $h ) ) );
+            return preg_replace( '/[^a-z0-9_]/', '', strtolower( trim( (string) $h ) ) );
         }, $headers );
 
         $required = [ 'city', 'service_keyword' ];
         foreach ( $required as $field ) {
             if ( ! in_array( $field, $headers, true ) ) {
+                fclose( $temp );
                 return new \WP_Error(
                     'missing_columns',
                     /* translators: %s: comma-separated list of required column names */
@@ -286,8 +289,11 @@ class REST_API {
         $imported = 0;
         $skipped  = 0;
 
-        foreach ( $lines as $line ) {
-            $values = str_getcsv( $line );
+        while ( ( $values = fgetcsv( $temp ) ) !== false ) {
+            if ( null === $values ) {
+                // Empty line in the stream — skip.
+                continue;
+            }
 
             // Pad to header count in case trailing empty columns are missing.
             while ( count( $values ) < count( $headers ) ) {
@@ -322,6 +328,8 @@ class REST_API {
             }
         }
 
+        fclose( $temp );
+
         return rest_ensure_response( [
             'imported' => $imported,
             'skipped'  => $skipped,
@@ -354,17 +362,31 @@ class REST_API {
         // BOM for Excel UTF-8 compatibility.
         fwrite( $output, "\xEF\xBB\xBF" );
 
+        // Sanitize a value to prevent CSV formula injection.
+        // Prefixes any value beginning with a formula-triggering character with
+        // a single-quote so that spreadsheet apps treat it as plain text.
+        $sanitize_csv = function ( $value ) {
+            if ( null === $value ) {
+                return '';
+            }
+            $value = (string) $value;
+            if ( '' !== $value && preg_match( '/^[=+\-@\x09\x0D]/', $value ) ) {
+                $value = "'" . $value;
+            }
+            return $value;
+        };
+
         fputcsv( $output, [ 'city', 'zip', 'service_keyword', 'meta_title', 'meta_description', 'nearby_cities', 'local_landmarks' ] );
 
         foreach ( $rows as $row ) {
             fputcsv( $output, [
-                $row->city,
-                $row->zip,
-                $row->service_keyword,
-                $row->meta_title,
-                $row->meta_description,
-                $row->nearby_cities ?? '',
-                $row->local_landmarks ?? '',
+                $sanitize_csv( $row->city ),
+                $sanitize_csv( $row->zip ),
+                $sanitize_csv( $row->service_keyword ),
+                $sanitize_csv( $row->meta_title ),
+                $sanitize_csv( $row->meta_description ),
+                $sanitize_csv( $row->nearby_cities ?? '' ),
+                $sanitize_csv( $row->local_landmarks ?? '' ),
             ] );
         }
 

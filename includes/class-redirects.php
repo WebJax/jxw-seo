@@ -63,13 +63,26 @@ class Redirects {
 
             // Match with and without trailing slash.
             if ( rtrim( $source, '/' ) === rtrim( $request_path, '/' ) ) {
+                // Prevent redirect loops: skip if the target resolves to the same path.
+                $raw_target_path = parse_url( (string) $redirect->target_url, PHP_URL_PATH );
+                if ( null !== $raw_target_path && '' !== (string) $raw_target_path ) {
+                    $target_path = '/' . ltrim( (string) $raw_target_path, '/' );
+                    if ( rtrim( $target_path, '/' ) === rtrim( $request_path, '/' ) ) {
+                        continue;
+                    }
+                }
+
                 $this->increment_hits( (int) $redirect->id );
 
                 $code = in_array( (int) $redirect->redirect_type, [ 301, 302 ], true )
                     ? (int) $redirect->redirect_type
                     : 301;
 
-                wp_redirect( esc_url_raw( $redirect->target_url ), $code );
+                // wp_validate_redirect restricts external targets to the current host by default.
+                // Passing the stored URL directly is safe for admin-configured rules; home_url('/')
+                // is used as the fallback if the target URL fails host validation.
+                $target = wp_validate_redirect( (string) $redirect->target_url, home_url( '/' ) );
+                wp_redirect( $target, $code );
                 exit;
             }
         }
@@ -277,7 +290,7 @@ class Redirects {
 
             <h2>
                 <?php esc_html_e( 'Existing Redirects', 'localseo-booster' ); ?>
-                <span class="title-count">(<?php echo count( $redirects ); ?>)</span>
+                <span class="title-count">(<?php echo esc_html( (string) count( $redirects ) ); ?>)</span>
             </h2>
 
             <?php if ( $redirects ) : ?>

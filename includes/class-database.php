@@ -134,10 +134,16 @@ class Database {
             $data['custom_slug'] = $slug;
         }
 
+        // Empty string slug would violate UNIQUE KEY on second blank row – use NULL instead
+        // (MySQL/MariaDB allow multiple NULLs in a UNIQUE index)
+        if ( isset( $data['custom_slug'] ) && $data['custom_slug'] === '' ) {
+            $data['custom_slug'] = null;
+        }
+
         $inserted = $wpdb->insert(
             $this->table_name,
             $data,
-            [ '%s', '%s', '%s', '%s', '%s', '%s', '%s' ]
+            [ '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ]
         );
 
         return $inserted ? $wpdb->insert_id : false;

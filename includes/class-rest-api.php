@@ -69,6 +69,19 @@ class REST_API {
             'callback' => [ $this, 'import_csv' ],
             'permission_callback' => [ $this, 'check_permission' ],
         ]);
+
+        // Lookup city via DAWA (Danmarks Adressers Web API)
+        register_rest_route( $this->namespace, '/lookup-city', [
+            'methods' => 'GET',
+            'callback' => [ $this, 'lookup_city' ],
+            'permission_callback' => [ $this, 'check_permission' ],
+            'args' => [
+                'city' => [
+                    'required'          => true,
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -76,6 +89,72 @@ class REST_API {
      */
     public function check_permission() {
         return current_user_can( 'manage_options' );
+    }
+
+    /**
+     * Lookup city data via DAWA (Danmarks Adressers Web API)
+     * No API key required. Returns zip code and nearby cities.
+     */
+    public function lookup_city( $request ) {
+        $city = $request->get_param( 'city' );
+
+        // 1. Find postnummer(e) matching the city name
+        $dawa_url = add_query_arg(
+            [ 'navn' => $city, 'srid' => '4326' ],
+            'https://api.dataforsyningen.dk/postnumre'
+        );
+
+        $response = wp_remote_get( $dawa_url, [ 'timeout' => 10 ] );
+
+        if ( is_wp_error( $response ) ) {
+            return new \WP_Error( 'dawa_error', __( 'Kunne ikke kontakte DAWA API.', 'localseo-booster' ), [ 'status' => 502 ] );
+        }
+
+        $postnumre = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( empty( $postnumre ) ) {
+            return new \WP_Error( 'not_found', __( 'Ingen resultater fundet for den angivne by.', 'localseo-booster' ), [ 'status' => 404 ] );
+        }
+
+        // Pick the best match (first result)
+        $match     = $postnumre[0];
+        $zip       = $match['nr'];
+        $city_name = $match['navn'];
+        $lon       = $match['visueltcenter'][0] ?? null;
+        $lat       = $match['visueltcenter'][1] ?? null;
+
+        // 2. Find nearby postal codes via coordinate circle (10 km radius)
+        $nearby_cities = [];
+        if ( $lon && $lat ) {
+            $nearby_url = add_query_arg(
+                [
+                    'cirkel' => "{$lon},{$lat},5000",
+                    'srid'   => '4326',
+                ],
+                'https://api.dataforsyningen.dk/postnumre'
+            );
+            $nb_response = wp_remote_get( $nearby_url, [ 'timeout' => 10 ] );
+            if ( ! is_wp_error( $nb_response ) ) {
+                $neighbors = json_decode( wp_remote_retrieve_body( $nb_response ), true );
+                if ( is_array( $neighbors ) ) {
+                    foreach ( $neighbors as $nb ) {
+                        if ( empty( $nb['navn'] ) || $nb['navn'] === $city_name ) {
+                            continue;
+                        }
+                        $nearby_cities[] = $nb['navn'];
+                        if ( count( $nearby_cities ) >= 5 ) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return rest_ensure_response( [
+            'zip'           => $zip,
+            'city'          => $city_name,
+            'nearby_cities' => implode( ', ', $nearby_cities ),
+        ] );
     }
 
     /**

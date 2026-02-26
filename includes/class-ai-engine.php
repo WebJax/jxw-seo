@@ -2,12 +2,46 @@
 /**
  * AI Engine Class
  *
- * Handles AI API integrations (OpenAI, Anthropic)
+ * Handles AI API integrations (OpenAI, Anthropic, Gemini)
  */
 
 namespace LocalSEO;
 
 class AI_Engine {
+
+    /**
+     * Parse a "retry in Xs" string from an API error message and return seconds as int.
+     * Returns null if nothing found.
+     */
+    private static function parse_retry_seconds( $message ) {
+        if ( preg_match( '/retry in (\d+(?:\.\d+)?)s/i', $message, $matches ) ) {
+            return (int) ceil( (float) $matches[1] );
+        }
+        // OpenAI style: "Please try again in 20s" or "try again after 30 seconds"
+        if ( preg_match( '/(?:try again (?:in|after))\s+(\d+(?:\.\d+)?)\s*s/i', $message, $matches ) ) {
+            return (int) ceil( (float) $matches[1] );
+        }
+        return null;
+    }
+
+    /**
+     * Build a user-friendly rate-limit WP_Error with optional countdown seconds.
+     */
+    private static function rate_limit_error( $raw_message ) {
+        $retry = self::parse_retry_seconds( $raw_message );
+        $friendly = __( 'AI-kvoten er midlertidigt opbrugt.', 'localseo-booster' );
+        if ( $retry ) {
+            $friendly .= ' ' . sprintf(
+                /* translators: %d: seconds */ __( 'Prøv igen om %d sekunder.', 'localseo-booster' ),
+                $retry
+            );
+        }
+        return new \WP_Error(
+            'rate_limit',
+            $friendly,
+            [ 'status' => 429, 'retry_seconds' => $retry ]
+        );
+    }
     /**
      * Generate AI content for a row
      *
@@ -95,7 +129,12 @@ class AI_Engine {
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( isset( $body['error'] ) ) {
-            return new \WP_Error( 'openai_error', $body['error']['message'] ?? 'Unknown error' );
+            $msg  = $body['error']['message'] ?? 'Unknown error';
+            $code = $body['error']['code'] ?? '';
+            if ( $code === 'rate_limit_exceeded' || str_contains( $msg, 'Rate limit' ) || str_contains( $msg, 'quota' ) ) {
+                return self::rate_limit_error( $msg );
+            }
+            return new \WP_Error( 'openai_error', $msg );
         }
 
         $content = $body['choices'][0]['message']['content'] ?? '';
@@ -157,7 +196,12 @@ class AI_Engine {
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( isset( $body['error'] ) ) {
-            return new \WP_Error( 'anthropic_error', $body['error']['message'] ?? 'Unknown error' );
+            $msg  = $body['error']['message'] ?? 'Unknown error';
+            $type = $body['error']['type'] ?? '';
+            if ( $type === 'rate_limit_error' || str_contains( $msg, 'rate limit' ) || str_contains( $msg, 'quota' ) ) {
+                return self::rate_limit_error( $msg );
+            }
+            return new \WP_Error( 'anthropic_error', $msg );
         }
 
         $content = $body['content'][0]['text'] ?? '';
@@ -193,7 +237,7 @@ class AI_Engine {
         $service = $row_data['service_keyword'] ?? '';
 
         $response = wp_remote_post( 
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $api_key,
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $api_key,
             [
                 'headers' => [
                     'Content-Type' => 'application/json',
@@ -225,7 +269,12 @@ class AI_Engine {
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( isset( $body['error'] ) ) {
-            return new \WP_Error( 'gemini_error', $body['error']['message'] ?? 'Unknown error' );
+            $msg    = $body['error']['message'] ?? 'Unknown error';
+            $status = $body['error']['code'] ?? 0;
+            if ( $status === 429 || str_contains( $msg, 'Quota exceeded' ) || str_contains( $msg, 'quota' ) ) {
+                return self::rate_limit_error( $msg );
+            }
+            return new \WP_Error( 'gemini_error', $msg );
         }
 
         $content = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';

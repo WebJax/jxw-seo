@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
-import { Button, Spinner, Notice, Modal } from '@wordpress/components';
+import { Button, Spinner, Notice, Modal, TextControl, TextareaControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -39,11 +39,39 @@ const DataCenter = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [editingCell, setEditingCell] = useState(null);
+    const [editModal, setEditModal] = useState(null); // { rowId, field, label, value, isTextarea, charLimit }
+    const [editModalValue, setEditModalValue] = useState('');
     const [generatingAI, setGeneratingAI] = useState(new Set());
+    const [lookingUpCity, setLookingUpCity] = useState(new Set());
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [bulkProgress, setBulkProgress] = useState(null);
     const [importing, setImporting] = useState(false);
+    const [rateLimitCountdown, setRateLimitCountdown] = useState(null); // seconds remaining
     const importFileRef = useRef(null);
+
+    // Countdown timer for rate limit
+    useEffect(() => {
+        if (rateLimitCountdown === null || rateLimitCountdown <= 0) return;
+        const timer = setTimeout(() => setRateLimitCountdown(prev => prev - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [rateLimitCountdown]);
+
+    const formatCountdown = (seconds) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
+    const openEditModal = (rowId, field, label, value, isTextarea = true, charLimit = null) => {
+        setEditModal({ rowId, field, label, isTextarea, charLimit });
+        setEditModalValue(value || '');
+    };
+
+    const saveEditModal = async () => {
+        const { rowId, field } = editModal;
+        await updateCell(rowId, field, editModalValue);
+        setEditModal(null);
+    };
 
     // Fetch data from API
     const fetchData = async () => {
@@ -88,7 +116,7 @@ const DataCenter = () => {
     // Generate AI content for a row
     const generateAI = async (rowId) => {
         setGeneratingAI(prev => new Set(prev).add(rowId));
-        
+        setRateLimitCountdown(null);
         try {
             const response = await apiFetch({
                 path: `/localseo/v1/generate-ai/${rowId}`,
@@ -102,13 +130,53 @@ const DataCenter = () => {
                 )
             );
         } catch (err) {
-            setError(err.message);
+            handleAIError(err);
         } finally {
             setGeneratingAI(prev => {
                 const next = new Set(prev);
                 next.delete(rowId);
                 return next;
             });
+        }
+    };
+
+    // Handle rate-limit errors uniformly
+    const handleAIError = (err) => {
+        const retrySeconds = err.data?.retry_seconds;
+        if (err.code === 'rate_limit' || retrySeconds) {
+            setRateLimitCountdown(retrySeconds || 60);
+            setError(null);
+        } else {
+            setError(err.message);
+        }
+    };
+
+    // Lookup city data via DAWA (zip + nearby cities)
+    const lookupCity = async (rowId, cityName) => {
+        if (!cityName || cityName.trim() === '') {
+            setError('Indtast et bynavn først.');
+            return;
+        }
+        setLookingUpCity(prev => new Set(prev).add(rowId));
+        try {
+            const result = await apiFetch({
+                path: `/localseo/v1/lookup-city?city=${encodeURIComponent(cityName)}`,
+            });
+            // Auto-fill zip and nearby_cities (and correct city capitalisation)
+            const updates = {};
+            if (result.zip) updates.zip = result.zip;
+            if (result.nearby_cities) updates.nearby_cities = result.nearby_cities;
+            if (result.city) updates.city = result.city;
+
+            // Save each changed field to the DB
+            for (const [field, val] of Object.entries(updates)) {
+                await updateCell(rowId, field, val);
+            }
+            setSuccess(`Fandt postnummer ${result.zip} for ${result.city} og ${result.nearby_cities.split(',').length} nærliggende byer.`);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLookingUpCity(prev => { const n = new Set(prev); n.delete(rowId); return n; });
         }
     };
 
@@ -204,11 +272,14 @@ const DataCenter = () => {
                 }
             } catch (err) {
                 failedCount++;
+                handleAIError(err);
                 setBulkProgress(prev => ({
                     ...prev,
                     current: i + 1,
                     failed: failedCount
                 }));
+                // If rate-limited, abort bulk
+                if (err.code === 'rate_limit' || err.data?.retry_seconds) break;
             }
         }
         
@@ -296,12 +367,24 @@ const DataCenter = () => {
                         autoFocus
                     />
                 ) : (
-                    <div onClick={() => setEditingCell(`${rowId}-city`)}>
-                        {value || <em>{__('Click to edit', 'localseo-booster')}</em>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div onClick={() => setEditingCell(`${rowId}-city`)} style={{ flex: 1, cursor: 'pointer' }}>
+                            {value || <em>{__('Klik for at redigere', 'localseo-booster')}</em>}
+                        </div>
+                        <Button
+                            variant="tertiary"
+                            size="small"
+                            onClick={() => lookupCity(rowId, value)}
+                            disabled={lookingUpCity.has(rowId)}
+                            title="Slå postnummer og nabobyer op automatisk (DAWA)"
+                            style={{ flexShrink: 0, padding: '2px 5px', minHeight: 'unset' }}
+                        >
+                            {lookingUpCity.has(rowId) ? <Spinner /> : '🔍'}
+                        </Button>
                     </div>
                 );
             },
-            size: 120,
+            size: 140,
         }),
         columnHelper.accessor('zip', {
             header: __('ZIP', 'localseo-booster'),
@@ -401,106 +484,123 @@ const DataCenter = () => {
         columnHelper.accessor('ai_generated_intro', {
             header: __('AI Intro', 'localseo-booster'),
             cell: info => {
+                const rowId = info.row.original.id;
                 const value = info.getValue();
-                return value ? (
-                    <div className="truncate" title={value}>
-                        {value.substring(0, 50)}...
+                return (
+                    <div className="cell-long-text">
+                        <div className="cell-preview">
+                            {value
+                                ? <span title={value}>{value.length > 80 ? value.substring(0, 80) + '...' : value}</span>
+                                : <em>{__('Ikke genereret', 'localseo-booster')}</em>
+                            }
+                        </div>
+                        <Button
+                            variant="tertiary"
+                            size="small"
+                            onClick={() => openEditModal(rowId, 'ai_generated_intro', __('AI Introduktion', 'localseo-booster'), value, true)}
+                        >
+                            ✏️
+                        </Button>
                     </div>
-                ) : (
-                    <em>{__('Not generated', 'localseo-booster')}</em>
                 );
             },
-            size: 200,
+            size: 220,
         }),
         columnHelper.accessor('meta_title', {
-            header: __('Meta Title', 'localseo-booster'),
-            cell: info => {
-                const value = info.getValue();
-                return value ? (
-                    <div className="truncate" title={value}>
-                        {value}
-                    </div>
-                ) : (
-                    <em>{__('Not set', 'localseo-booster')}</em>
-                );
-            },
-            size: 150,
-        }),
-        columnHelper.accessor('nearby_cities', {
-            header: __('Nearby Cities', 'localseo-booster'),
+            header: __('Meta Titel', 'localseo-booster'),
             cell: info => {
                 const rowId = info.row.original.id;
                 const value = info.getValue();
-                const isEditing = editingCell === `${rowId}-nearby_cities`;
-
-                return isEditing ? (
-                    <input
-                        type="text"
-                        value={value || ''}
-                        onChange={e => {
-                            const newValue = e.target.value;
-                            setData(prevData =>
-                                prevData.map(row =>
-                                    row.id === rowId ? { ...row, nearby_cities: newValue } : row
-                                )
-                            );
-                        }}
-                        onBlur={e => {
-                            setEditingCell(null);
-                            updateCell(rowId, 'nearby_cities', e.target.value);
-                        }}
-                        onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                                setEditingCell(null);
-                                updateCell(rowId, 'nearby_cities', e.target.value);
+                return (
+                    <div className="cell-long-text">
+                        <div className="cell-preview">
+                            {value
+                                ? <span title={value}>{value}</span>
+                                : <em>{__('Ikke sat', 'localseo-booster')}</em>
                             }
-                        }}
-                        autoFocus
-                        placeholder={__('e.g. Niløse, Tersløse', 'localseo-booster')}
-                    />
-                ) : (
-                    <div onClick={() => setEditingCell(`${rowId}-nearby_cities`)}>
-                        {value || <em>{__('Click to edit', 'localseo-booster')}</em>}
+                        </div>
+                        <Button
+                            variant="tertiary"
+                            size="small"
+                            onClick={() => openEditModal(rowId, 'meta_title', __('Meta Titel', 'localseo-booster'), value, false, 60)}
+                        >
+                            ✏️
+                        </Button>
+                    </div>
+                );
+            },
+            size: 180,
+        }),
+        columnHelper.accessor('meta_description', {
+            header: __('Meta Beskrivelse', 'localseo-booster'),
+            cell: info => {
+                const rowId = info.row.original.id;
+                const value = info.getValue();
+                return (
+                    <div className="cell-long-text">
+                        <div className="cell-preview">
+                            {value
+                                ? <span title={value}>{value.length > 80 ? value.substring(0, 80) + '...' : value}</span>
+                                : <em>{__('Ikke sat', 'localseo-booster')}</em>
+                            }
+                        </div>
+                        <Button
+                            variant="tertiary"
+                            size="small"
+                            onClick={() => openEditModal(rowId, 'meta_description', __('Meta Beskrivelse', 'localseo-booster'), value, true, 155)}
+                        >
+                            ✏️
+                        </Button>
+                    </div>
+                );
+            },
+            size: 220,
+        }),
+        columnHelper.accessor('nearby_cities', {
+            header: __('Nærliggende byer', 'localseo-booster'),
+            cell: info => {
+                const rowId = info.row.original.id;
+                const value = info.getValue();
+                return (
+                    <div className="cell-long-text">
+                        <div className="cell-preview">
+                            {value
+                                ? <span>{value}</span>
+                                : <em>{__('Ikke sat', 'localseo-booster')}</em>
+                            }
+                        </div>
+                        <Button
+                            variant="tertiary"
+                            size="small"
+                            onClick={() => openEditModal(rowId, 'nearby_cities', __('Nærliggende byer', 'localseo-booster'), value, false)}
+                        >
+                            ✏️
+                        </Button>
                     </div>
                 );
             },
             size: 180,
         }),
         columnHelper.accessor('local_landmarks', {
-            header: __('Local Landmarks', 'localseo-booster'),
+            header: __('Lokale seværdigheder', 'localseo-booster'),
             cell: info => {
                 const rowId = info.row.original.id;
                 const value = info.getValue();
-                const isEditing = editingCell === `${rowId}-local_landmarks`;
-
-                return isEditing ? (
-                    <input
-                        type="text"
-                        value={value || ''}
-                        onChange={e => {
-                            const newValue = e.target.value;
-                            setData(prevData =>
-                                prevData.map(row =>
-                                    row.id === rowId ? { ...row, local_landmarks: newValue } : row
-                                )
-                            );
-                        }}
-                        onBlur={e => {
-                            setEditingCell(null);
-                            updateCell(rowId, 'local_landmarks', e.target.value);
-                        }}
-                        onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                                setEditingCell(null);
-                                updateCell(rowId, 'local_landmarks', e.target.value);
+                return (
+                    <div className="cell-long-text">
+                        <div className="cell-preview">
+                            {value
+                                ? <span title={value}>{value.length > 60 ? value.substring(0, 60) + '...' : value}</span>
+                                : <em>{__('Ikke sat', 'localseo-booster')}</em>
                             }
-                        }}
-                        autoFocus
-                        placeholder={__('e.g. Dianalund Centret', 'localseo-booster')}
-                    />
-                ) : (
-                    <div onClick={() => setEditingCell(`${rowId}-local_landmarks`)}>
-                        {value || <em>{__('Click to edit', 'localseo-booster')}</em>}
+                        </div>
+                        <Button
+                            variant="tertiary"
+                            size="small"
+                            onClick={() => openEditModal(rowId, 'local_landmarks', __('Lokale seværdigheder', 'localseo-booster'), value, true)}
+                        >
+                            ✏️
+                        </Button>
                     </div>
                 );
             },
@@ -521,7 +621,7 @@ const DataCenter = () => {
                             onClick={() => generateAI(rowId)}
                             disabled={isGenerating}
                         >
-                            {isGenerating ? <Spinner /> : __('Generate AI', 'localseo-booster')}
+                            {isGenerating ? <Spinner /> : __('Generer AI', 'localseo-booster')}
                         </Button>
                         <Button
                             variant="tertiary"
@@ -529,14 +629,14 @@ const DataCenter = () => {
                             isDestructive
                             onClick={() => deleteRow(rowId)}
                         >
-                            {__('Delete', 'localseo-booster')}
+                            {__('Slet', 'localseo-booster')}
                         </Button>
                     </div>
                 );
             },
             size: 180,
         }),
-    ], [editingCell, generatingAI, data]);
+    ], [editingCell, generatingAI, lookingUpCity, data]);
 
     const table = useReactTable({
         data,
@@ -555,11 +655,18 @@ const DataCenter = () => {
 
     return (
         <div className="localseo-data-center">
-            <h1>{__('LocalSEO Data Center', 'localseo-booster')}</h1>
+            <h1>{__('LocalSEO Datakenter', 'localseo-booster')}</h1>
             
             {error && (
                 <Notice status="error" isDismissible onRemove={() => setError(null)}>
                     {error}
+                </Notice>
+            )}
+
+            {rateLimitCountdown > 0 && (
+                <Notice status="warning" isDismissible onRemove={() => setRateLimitCountdown(null)}>
+                    <strong>⏳ AI-kvoten er midlertidigt opbrugt.</strong>
+                    {' '}Prøv igen om <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{formatCountdown(rateLimitCountdown)}</strong>
                 </Notice>
             )}
 
@@ -598,18 +705,58 @@ const DataCenter = () => {
                 </Notice>
             )}
 
+            {editModal && (
+                <Modal
+                    title={editModal.label}
+                    onRequestClose={() => setEditModal(null)}
+                    style={{ width: '600px' }}
+                >
+                    {editModal.isTextarea ? (
+                        <TextareaControl
+                            label={editModal.label}
+                            hideLabelFromVision
+                            value={editModalValue}
+                            onChange={setEditModalValue}
+                            rows={8}
+                            style={{ width: '100%', fontSize: '14px' }}
+                        />
+                    ) : (
+                        <TextControl
+                            label={editModal.label}
+                            hideLabelFromVision
+                            value={editModalValue}
+                            onChange={setEditModalValue}
+                            style={{ width: '100%', fontSize: '14px' }}
+                        />
+                    )}
+                    {editModal.charLimit && (
+                        <p style={{ fontSize: '12px', color: editModalValue.length > editModal.charLimit ? '#cc1818' : '#8c8f94', marginTop: '4px' }}>
+                            {editModalValue.length} / {editModal.charLimit} tegn
+                        </p>
+                    )}
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                        <Button variant="primary" onClick={saveEditModal}>
+                            {__('Gem', 'localseo-booster')}
+                        </Button>
+                        <Button variant="secondary" onClick={() => setEditModal(null)}>
+                            {__('Annuller', 'localseo-booster')}
+                        </Button>
+                    </div>
+                </Modal>
+            )}
+
             {deleteConfirm && (
                 <Modal
-                    title={__('Confirm Delete', 'localseo-booster')}
+                    title={__('Bekræft sletning', 'localseo-booster')}
                     onRequestClose={() => setDeleteConfirm(null)}
                 >
-                    <p>{__('Are you sure you want to delete this row?', 'localseo-booster')}</p>
+                    <p>{__('Er du sikker på, at du vil slette denne række?', 'localseo-booster')}</p>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                         <Button variant="primary" isDestructive onClick={confirmDelete}>
-                            {__('Delete', 'localseo-booster')}
+                            {__('Slet', 'localseo-booster')}
                         </Button>
                         <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>
-                            {__('Cancel', 'localseo-booster')}
+                            {__('Annuller', 'localseo-booster')}
                         </Button>
                     </div>
                 </Modal>
@@ -617,16 +764,16 @@ const DataCenter = () => {
 
             <div className="toolbar">
                 <Button variant="primary" onClick={addRow} disabled={bulkProgress !== null}>
-                    {__('Add New Row', 'localseo-booster')}
+                    {__('Tilføj ny række', 'localseo-booster')}
                 </Button>
                 <Button variant="secondary" onClick={bulkGenerateAI} disabled={bulkProgress !== null}>
-                    {bulkProgress ? __('Generating...', 'localseo-booster') : __('Generate All Missing AI Fields', 'localseo-booster')}
+                    {bulkProgress ? __('Genererer...', 'localseo-booster') : __('Generer alle manglende AI-felter', 'localseo-booster')}
                 </Button>
                 <Button variant="secondary" onClick={handleExportCSV} disabled={bulkProgress !== null || importing}>
-                    {__('Export CSV', 'localseo-booster')}
+                    {__('Eksporter CSV', 'localseo-booster')}
                 </Button>
                 <Button variant="secondary" onClick={() => importFileRef.current && importFileRef.current.click()} disabled={bulkProgress !== null || importing}>
-                    {importing ? __('Importing...', 'localseo-booster') : __('Import CSV', 'localseo-booster')}
+                    {importing ? __('Importerer...', 'localseo-booster') : __('Importer CSV', 'localseo-booster')}
                 </Button>
                 <input
                     type="file"
@@ -636,7 +783,7 @@ const DataCenter = () => {
                     onChange={handleImportFile}
                 />
                 <Button variant="tertiary" onClick={fetchData} disabled={bulkProgress !== null}>
-                    {__('Refresh', 'localseo-booster')}
+                    {__('Opdater', 'localseo-booster')}
                 </Button>
             </div>
 
@@ -681,7 +828,7 @@ const DataCenter = () => {
 
             {data.length === 0 && (
                 <div className="empty-state">
-                    <p>{__('No data yet. Click "Add New Row" to get started.', 'localseo-booster')}</p>
+                    <p>{__('Ingen data endnu. Klik på "Tilføj ny række" for at komme i gang.', 'localseo-booster')}</p>
                 </div>
             )}
         </div>

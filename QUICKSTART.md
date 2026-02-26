@@ -3,12 +3,12 @@
 ## Installation
 
 1. **Install the Plugin**
-   - Copy the plugin folder to `/wp-content/plugins/localseo-booster/`
+   - Copy the plugin folder to `/wp-content/plugins/jxw-seo/`
    - Activate the plugin through WordPress admin
 
 2. **Install Dependencies and Build**
    ```bash
-   cd /wp-content/plugins/localseo-booster/
+   cd /wp-content/plugins/jxw-seo/
    npm install
    npm run build
    ```

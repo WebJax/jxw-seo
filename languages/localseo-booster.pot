@@ -1,0 +1,197 @@
+# Translation template for LocalSEO Booster plugin.
+# Copyright (C) 2025 WebJax
+# This file is distributed under the same license as the LocalSEO Booster package.
+# Translators should read the following before translating:
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: LocalSEO Booster 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/WebJax/jxw-seo/issues\n"
+"POT-Creation-Date: 2025-02-26T00:00:00+00:00\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: admin/components/DataCenter.js:268
+msgid "City"
+msgstr ""
+
+#: admin/components/DataCenter.js:307
+msgid "ZIP"
+msgstr ""
+
+#: admin/components/DataCenter.js:346
+msgid "Service"
+msgstr ""
+
+#: admin/components/DataCenter.js:385
+msgid "Page URL"
+msgstr ""
+
+#: admin/components/DataCenter.js:396
+msgid "Auto-generated"
+msgstr ""
+
+#: admin/components/DataCenter.js:402
+msgid "AI Intro"
+msgstr ""
+
+#: admin/components/DataCenter.js:431
+msgid "Not generated"
+msgstr ""
+
+#: admin/components/DataCenter.js:439
+msgid "Meta Title"
+msgstr ""
+
+#: admin/components/DataCenter.js:468
+msgid "Not set"
+msgstr ""
+
+#: admin/components/DataCenter.js:476
+msgid "Meta Description"
+msgstr ""
+
+#: admin/components/DataCenter.js:513
+msgid "Nearby Cities"
+msgstr ""
+
+#: admin/components/DataCenter.js:535
+msgid "e.g. Niløse, Tersløse"
+msgstr ""
+
+#: admin/components/DataCenter.js:547
+msgid "Local Landmarks"
+msgstr ""
+
+#: admin/components/DataCenter.js:569
+msgid "e.g. Dianalund Centret"
+msgstr ""
+
+#: admin/components/DataCenter.js:300
+#: admin/components/DataCenter.js:339
+#: admin/components/DataCenter.js:378
+#: admin/components/DataCenter.js:540
+#: admin/components/DataCenter.js:574
+msgid "Click to edit"
+msgstr ""
+
+#: admin/components/DataCenter.js:582
+msgid "Actions"
+msgstr ""
+
+#: admin/components/DataCenter.js:595
+msgid "Generate AI"
+msgstr ""
+
+#: admin/components/DataCenter.js:603
+#: admin/components/DataCenter.js:680
+msgid "Delete"
+msgstr ""
+
+#: admin/components/DataCenter.js:622
+msgid "Loading data..."
+msgstr ""
+
+#: admin/components/DataCenter.js:629
+msgid "LocalSEO Data Center"
+msgstr ""
+
+#: admin/components/DataCenter.js:645
+msgid "Bulk AI Generation in Progress..."
+msgstr ""
+
+#: admin/components/DataCenter.js:648
+msgid "Processing:"
+msgstr ""
+
+#: admin/components/DataCenter.js:666
+msgid "Success:"
+msgstr ""
+
+#: admin/components/DataCenter.js:666
+msgid "Failed:"
+msgstr ""
+
+#: admin/components/DataCenter.js:674
+msgid "Confirm Delete"
+msgstr ""
+
+#: admin/components/DataCenter.js:677
+msgid "Are you sure you want to delete this row?"
+msgstr ""
+
+#: admin/components/DataCenter.js:683
+msgid "Cancel"
+msgstr ""
+
+#: admin/components/DataCenter.js:156
+msgid "Row deleted successfully."
+msgstr ""
+
+#: admin/components/DataCenter.js:169
+msgid "No rows need AI generation."
+msgstr ""
+
+#: admin/components/DataCenter.js:217
+msgid "Generated %1$s items. Failed: %2$s"
+msgstr ""
+
+#: admin/components/DataCenter.js:247
+msgid "Imported %1$d rows. Skipped: %2$d"
+msgstr ""
+
+#: admin/components/DataCenter.js:691
+msgid "Add New Row"
+msgstr ""
+
+#: admin/components/DataCenter.js:694
+msgid "Generating..."
+msgstr ""
+
+#: admin/components/DataCenter.js:694
+msgid "Generate All Missing AI Fields"
+msgstr ""
+
+#: admin/components/DataCenter.js:697
+msgid "Export CSV"
+msgstr ""
+
+#: admin/components/DataCenter.js:700
+msgid "Importing..."
+msgstr ""
+
+#: admin/components/DataCenter.js:700
+msgid "Import CSV"
+msgstr ""
+
+#: admin/components/DataCenter.js:710
+msgid "Refresh"
+msgstr ""
+
+#: admin/components/DataCenter.js:755
+msgid "No data yet. Click \"Add New Row\" to get started."
+msgstr ""
+
+#: includes/class-rest-api.php:110
+msgid "Failed to create row"
+msgstr ""
+
+#: includes/class-rest-api.php
+msgid "API key not configured"
+msgstr ""
+
+#: includes/class-rest-api.php
+msgid "Invalid API provider"
+msgstr ""
+
+#: includes/class-rest-api.php
+msgid "Failed to update row"
+msgstr ""
+
+#: includes/class-rest-api.php
+msgid "Failed to delete row"
+msgstr ""
+
+#: includes/class-rest-api.php
+msgid "Row not found"
+msgstr ""

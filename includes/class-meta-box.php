@@ -35,6 +35,16 @@ class Meta_Box {
         'HomeAndConstructionBusiness'  => 'HomeAndConstructionBusiness',
     ];
 
+    /**
+     * Returns the list of allowed schema type values (non-empty keys only).
+     * Used by AI_Engine to build prompts from the same source of truth.
+     *
+     * @return string[]
+     */
+    public static function get_allowed_schema_type_keys(): array {
+        return array_values( array_filter( array_keys( self::ALLOWED_SCHEMA_TYPES ) ) );
+    }
+
     public function __construct() {
         add_action( 'add_meta_boxes', [ $this, 'register_meta_boxes' ] );
         add_action( 'save_post', [ $this, 'save_meta' ], 10, 2 );

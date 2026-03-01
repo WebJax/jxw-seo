@@ -370,7 +370,7 @@ const DataCenter = () => {
                 ) : (
                     <div className="flex items-center gap-1">
                         <div onClick={() => setEditingCell(`${rowId}-city`)} className="flex-1 cursor-pointer">
-                            {value || <em>{__('Klik for at redigere', 'localseo-booster')}</em>}
+                            {value || <em className="text-[#8c8f94]">{__('Klik for at redigere', 'localseo-booster')}</em>}
                         </div>
                         <Button
                             variant="tertiary"

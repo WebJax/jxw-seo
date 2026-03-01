@@ -95,9 +95,10 @@ className="border-[#ccc]"    // WP border grey
 
 ### Gutenberg blocks
 
-Do **not** use Tailwind utilities inside any file under `src/blocks/` or any
-file that is loaded in the block editor.  Those files use WordPress / Gutenberg
-component styles only.
+Do **not** use Tailwind utilities inside any Gutenberg block source files or
+any file that is loaded in the block editor.  Those files use WordPress /
+Gutenberg component styles only.  If a dedicated blocks directory is added to
+this project in the future (e.g. `src/blocks/`), the same exclusion applies.
 
 ---
 

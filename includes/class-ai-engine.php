@@ -96,7 +96,7 @@ class AI_Engine {
     private static function parse_post_seo_response( $content ) {
         $json_str = trim( $content );
         // Remove opening code fence (``` or ```json) at the very start of the string.
-        $json_str = preg_replace( '/\A```(?:json)?\s*\n?/', '', $json_str );
+        $json_str = preg_replace( '/\A```(?:json)?\s*\n?/i', '', $json_str );
         // Remove closing code fence at the very end of the string.
         $json_str = preg_replace( '/\n?```\s*\z/', '', $json_str );
 

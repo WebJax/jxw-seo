@@ -65,7 +65,7 @@ class AI_Engine {
         $content   = substr( $content, 0, 500 );
         $post_type = $post_data['post_type'] ?? 'page';
 
-        $schema_types = 'WebPage, Article, BlogPosting, FAQPage, AboutPage, ContactPage, LocalBusiness, Service, ProfessionalService, HomeAndConstructionBusiness';
+        $schema_types = implode( ', ', Meta_Box::get_allowed_schema_type_keys() );
         $prompt = sprintf(
             'Generate SEO metadata for a %s titled "%s". Content excerpt: %s. ' .
             'Respond with valid JSON only: {"meta_title": "max 60 chars", "meta_description": "max 155 chars", "schema_type": "one of: %s"}',

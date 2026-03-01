@@ -1,207 +1,42 @@
-.localseo-data-center {
-    margin: 20px 0;
-}
+/* Tailwind CSS utility layers – Gutenberg block styles are NOT affected. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.localseo-data-center h1 {
-    margin-bottom: 20px;
-}
-
-.localseo-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-}
-
-.toolbar {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.table-container {
-    overflow-x: auto;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.localseo-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: auto;
-}
-
-.localseo-table thead {
-    background: #f0f0f1;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.localseo-table th {
-    padding: 12px 8px;
-    text-align: left;
-    font-weight: 600;
-    border-bottom: 2px solid #ccc;
-    min-width: 120px;
-}
-
-.localseo-table td {
-    padding: 8px;
-    border-bottom: 1px solid #e0e0e0;
-    vertical-align: top;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-}
-
-.localseo-table tbody tr:hover {
-    background: #f9f9f9;
-}
-
-.localseo-table input {
-    width: 100%;
-    padding: 4px 8px;
-    border: 1px solid #8c8f94;
-    border-radius: 2px;
-    font-size: 14px;
-}
-
-.localseo-table input:focus {
-    outline: none;
-    border-color: #2271b1;
-    box-shadow: 0 0 0 1px #2271b1;
-}
-
-.localseo-table textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #8c8f94;
-    border-radius: 2px;
-    font-size: 14px;
-    resize: vertical;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-}
-
+/*
+ * Table inputs / textareas
+ * These pseudo-class selectors cannot be expressed as Tailwind utilities
+ * applied directly in JSX, so they live here as a thin complement.
+ */
+.localseo-table input:focus,
 .localseo-table textarea:focus {
     outline: none;
     border-color: #2271b1;
     box-shadow: 0 0 0 1px #2271b1;
 }
 
-.localseo-table td > div {
-    cursor: pointer;
-    min-height: 20px;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-    line-height: 1.5;
-}
-
-.localseo-table td > div em {
-    color: #8c8f94;
-    font-style: italic;
-}
-
-/* Long-text cell layout: preview + edit button side by side */
-.cell-long-text {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-}
-
-.cell-long-text .cell-preview {
-    flex: 1;
-    min-width: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    overflow: hidden;
-    word-break: break-word;
-}
-
-.cell-long-text .cell-preview em {
-    color: #8c8f94;
-    font-style: italic;
-}
-
-.cell-long-text .components-button {
-    flex-shrink: 0;
-    padding: 2px 6px !important;
-    min-height: unset !important;
-    height: auto !important;
-}
-
-/* Column-specific widths for better display */
-.localseo-table th:nth-child(1) { /* ID */
-    min-width: 60px;
-    width: 60px;
-}
-
-.localseo-table th:nth-child(2) { /* City */
-    min-width: 100px;
-}
-
-.localseo-table th:nth-child(3) { /* ZIP */
-    min-width: 80px;
-}
-
-.localseo-table th:nth-child(4) { /* Service */
-    min-width: 120px;
-}
-
-.localseo-table th:nth-child(5) { /* Page URL */
-    min-width: 140px;
-}
-
-.localseo-table th:nth-child(6) { /* AI Intro */
-    min-width: 250px;
-}
-
-.localseo-table th:nth-child(7) { /* Meta Title */
-    min-width: 200px;
-}
-
-.localseo-table th:nth-child(8) { /* Meta Description */
-    min-width: 250px;
-}
-
-.localseo-table th:nth-child(9) { /* Nearby Cities */
-    min-width: 180px;
-}
-
-.localseo-table th:nth-child(10) { /* Local Landmarks */
-    min-width: 200px;
-}
-
-.localseo-table th:nth-child(11) { /* Actions */
-    min-width: 140px;
-    width: 140px;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.action-buttons button {
-    white-space: nowrap;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 40px;
-    color: #8c8f94;
-}
-
-.empty-state p {
-    font-size: 16px;
-}
+/* Column-specific widths (nth-child selectors) */
+.localseo-table th:nth-child(1) { min-width: 60px;  width: 60px;  } /* ID */
+.localseo-table th:nth-child(2) { min-width: 100px;              } /* City */
+.localseo-table th:nth-child(3) { min-width: 80px;               } /* ZIP */
+.localseo-table th:nth-child(4) { min-width: 120px;              } /* Service */
+.localseo-table th:nth-child(5) { min-width: 140px;              } /* Page URL */
+.localseo-table th:nth-child(6) { min-width: 250px;              } /* AI Intro */
+.localseo-table th:nth-child(7) { min-width: 200px;              } /* Meta Title */
+.localseo-table th:nth-child(8) { min-width: 250px;              } /* Meta Desc */
+.localseo-table th:nth-child(9) { min-width: 180px;              } /* Nearby Cities */
+.localseo-table th:nth-child(10){ min-width: 200px;              } /* Local Landmarks */
+.localseo-table th:nth-child(11){ min-width: 140px; width: 140px;} /* Actions */
 
 /* WordPress components overrides */
 .components-spinner {
     margin: 0;
+}
+
+/* Long-text cell: compact edit-button sizing (WordPress component override) */
+.lseo-cell-text .components-button {
+    flex-shrink: 0;
+    padding: 2px 6px !important;
+    min-height: unset !important;
+    height: auto !important;
 }

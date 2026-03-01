@@ -83,7 +83,11 @@ class AI_Engine {
             return self::call_gemini_post_seo( $api_key, $prompt );
         }
 
-        return new \WP_Error( 'invalid_provider', __( 'Invalid API provider', 'localseo-booster' ) );
+        return new \WP_Error(
+            'invalid_provider',
+            __( 'Invalid API provider', 'localseo-booster' ),
+            [ 'status' => 400 ]
+        );
     }
 
     /**

@@ -53,7 +53,11 @@ class AI_Engine {
         $api_key      = get_option( 'localseo_api_key', '' );
 
         if ( empty( $api_key ) ) {
-            return new \WP_Error( 'no_api_key', __( 'API key not configured', 'localseo-booster' ) );
+            return new \WP_Error(
+                'no_api_key',
+                __( 'API key not configured', 'localseo-booster' ),
+                [ 'status' => 400 ]
+            );
         }
 
         $title     = $post_data['title'] ?? '';

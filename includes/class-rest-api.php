@@ -70,6 +70,15 @@ class REST_API {
             'permission_callback' => [ $this, 'check_permission' ],
         ]);
 
+        // Generate AI SEO metadata for a regular WordPress post/page
+        register_rest_route( $this->namespace, '/generate-ai-post/(?P<post_id>\d+)', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'generate_post_seo' ],
+            'permission_callback' => function ( $request ) {
+                return current_user_can( 'edit_post', (int) $request->get_param( 'post_id' ) );
+            },
+        ] );
+
         // Lookup city via DAWA (Danmarks Adressers Web API)
         register_rest_route( $this->namespace, '/lookup-city', [
             'methods' => 'GET',
@@ -304,6 +313,37 @@ class REST_API {
         }
 
         return rest_ensure_response( $results );
+    }
+
+    /**
+     * Generate AI SEO metadata for a regular WordPress post or page.
+     *
+     * Does not auto-save results; returns data for the client to review first.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function generate_post_seo( $request ) {
+        $post_id = (int) $request->get_param( 'post_id' );
+        $post    = get_post( $post_id );
+
+        if ( ! $post ) {
+            return new \WP_Error( 'not_found', __( 'Post not found', 'localseo-booster' ), [ 'status' => 404 ] );
+        }
+
+        $post_data = [
+            'title'     => $post->post_title,
+            'content'   => $post->post_content,
+            'post_type' => $post->post_type,
+        ];
+
+        $result = AI_Engine::generate_post_seo( $post_data );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
     }
 
     /**

@@ -43,6 +43,224 @@ class AI_Engine {
         );
     }
     /**
+     * Generate AI SEO metadata for a regular WordPress post or page.
+     *
+     * @param array $post_data Array with title, content, post_type
+     * @return array|WP_Error Array with meta_title, meta_description, schema_type or WP_Error on failure
+     */
+    public static function generate_post_seo( $post_data ) {
+        $api_provider = get_option( 'localseo_api_provider', 'openai' );
+        $api_key      = get_option( 'localseo_api_key', '' );
+
+        if ( empty( $api_key ) ) {
+            return new \WP_Error( 'no_api_key', __( 'API key not configured', 'localseo-booster' ) );
+        }
+
+        $title     = $post_data['title'] ?? '';
+        $content   = wp_strip_all_tags( $post_data['content'] ?? '' );
+        $content   = substr( $content, 0, 500 );
+        $post_type = $post_data['post_type'] ?? 'page';
+
+        $schema_types = 'WebPage, Article, BlogPosting, FAQPage, AboutPage, ContactPage, LocalBusiness, Service, ProfessionalService, HomeAndConstructionBusiness';
+        $prompt = sprintf(
+            'Generate SEO metadata for a %s titled "%s". Content excerpt: %s. ' .
+            'Respond with valid JSON only: {"meta_title": "max 60 chars", "meta_description": "max 155 chars", "schema_type": "one of: %s"}',
+            $post_type,
+            $title,
+            $content,
+            $schema_types
+        );
+
+        if ( $api_provider === 'openai' ) {
+            return self::call_openai_post_seo( $api_key, $prompt );
+        } elseif ( $api_provider === 'anthropic' ) {
+            return self::call_anthropic_post_seo( $api_key, $prompt );
+        } elseif ( $api_provider === 'gemini' ) {
+            return self::call_gemini_post_seo( $api_key, $prompt );
+        }
+
+        return new \WP_Error( 'invalid_provider', __( 'Invalid API provider', 'localseo-booster' ) );
+    }
+
+    /**
+     * Parse AI text response into post SEO fields.
+     * Strips markdown code fences before decoding.
+     *
+     * @param string $content Raw AI response text.
+     * @return array
+     */
+    private static function parse_post_seo_response( $content ) {
+        $json_str = trim( $content );
+        // Remove opening code fence (``` or ```json) at the very start of the string.
+        $json_str = preg_replace( '/\A```(?:json)?\s*\n?/', '', $json_str );
+        // Remove closing code fence at the very end of the string.
+        $json_str = preg_replace( '/\n?```\s*\z/', '', $json_str );
+
+        $parsed = json_decode( trim( $json_str ), true );
+        if ( $parsed && ( isset( $parsed['meta_title'] ) || isset( $parsed['meta_description'] ) ) ) {
+            return [
+                'meta_title'       => sanitize_text_field( $parsed['meta_title'] ?? '' ),
+                'meta_description' => sanitize_textarea_field( $parsed['meta_description'] ?? '' ),
+                'schema_type'      => sanitize_text_field( $parsed['schema_type'] ?? '' ),
+            ];
+        }
+
+        return [
+            'meta_title'       => '',
+            'meta_description' => sanitize_textarea_field( substr( $content, 0, 155 ) ),
+            'schema_type'      => '',
+        ];
+    }
+
+    /**
+     * Call OpenAI API for post SEO generation.
+     *
+     * @param string $api_key
+     * @param string $prompt
+     * @return array|WP_Error
+     */
+    private static function call_openai_post_seo( $api_key, $prompt ) {
+        $messages = [
+            [
+                'role'    => 'system',
+                'content' => 'You are an SEO expert. Always respond with valid JSON containing: meta_title (max 60 chars), meta_description (max 155 chars), schema_type (a schema.org type).',
+            ],
+            [
+                'role'    => 'user',
+                'content' => $prompt,
+            ],
+        ];
+
+        $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $api_key,
+                'Content-Type'  => 'application/json',
+            ],
+            'body'    => wp_json_encode( [
+                'model'       => 'gpt-4o-mini',
+                'messages'    => $messages,
+                'temperature' => 0.5,
+                'max_tokens'  => 300,
+            ] ),
+            'timeout' => 30,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( isset( $body['error'] ) ) {
+            $msg  = $body['error']['message'] ?? 'Unknown error';
+            $code = $body['error']['code'] ?? '';
+            if ( $code === 'rate_limit_exceeded' || str_contains( $msg, 'Rate limit' ) || str_contains( $msg, 'quota' ) ) {
+                return self::rate_limit_error( $msg );
+            }
+            return new \WP_Error( 'openai_error', $msg );
+        }
+
+        $content = $body['choices'][0]['message']['content'] ?? '';
+        return self::parse_post_seo_response( $content );
+    }
+
+    /**
+     * Call Anthropic API for post SEO generation.
+     *
+     * @param string $api_key
+     * @param string $prompt
+     * @return array|WP_Error
+     */
+    private static function call_anthropic_post_seo( $api_key, $prompt ) {
+        $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
+            'headers' => [
+                'x-api-key'         => $api_key,
+                'anthropic-version' => '2023-06-01',
+                'Content-Type'      => 'application/json',
+            ],
+            'body'    => wp_json_encode( [
+                'model'      => 'claude-3-5-sonnet-20241022',
+                'max_tokens' => 300,
+                'messages'   => [
+                    [
+                        'role'    => 'user',
+                        'content' => $prompt,
+                    ],
+                ],
+            ] ),
+            'timeout' => 30,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( isset( $body['error'] ) ) {
+            $msg  = $body['error']['message'] ?? 'Unknown error';
+            $type = $body['error']['type'] ?? '';
+            if ( $type === 'rate_limit_error' || str_contains( $msg, 'rate limit' ) || str_contains( $msg, 'quota' ) ) {
+                return self::rate_limit_error( $msg );
+            }
+            return new \WP_Error( 'anthropic_error', $msg );
+        }
+
+        $content = $body['content'][0]['text'] ?? '';
+        return self::parse_post_seo_response( $content );
+    }
+
+    /**
+     * Call Google Gemini API for post SEO generation.
+     *
+     * @param string $api_key
+     * @param string $prompt
+     * @return array|WP_Error
+     */
+    private static function call_gemini_post_seo( $api_key, $prompt ) {
+        $response = wp_remote_post(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $api_key,
+            [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'body'    => wp_json_encode( [
+                    'contents'         => [
+                        [
+                            'parts' => [
+                                [ 'text' => $prompt ],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'temperature'     => 0.5,
+                        'maxOutputTokens' => 300,
+                    ],
+                ] ),
+                'timeout' => 30,
+            ]
+        );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( isset( $body['error'] ) ) {
+            $msg    = $body['error']['message'] ?? 'Unknown error';
+            $status = $body['error']['code'] ?? 0;
+            if ( $status === 429 || str_contains( $msg, 'Quota exceeded' ) || str_contains( $msg, 'quota' ) ) {
+                return self::rate_limit_error( $msg );
+            }
+            return new \WP_Error( 'gemini_error', $msg );
+        }
+
+        $content = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        return self::parse_post_seo_response( $content );
+    }
+
+    /**
      * Generate AI content for a row
      *
      * @param array $row_data Array with city, zip, service_keyword

@@ -51,13 +51,13 @@ class Meta_Box {
             return;
         }
 
-        wp_register_script( 'localseo-metabox', false, [], LOCALSEO_VERSION, true );
+        wp_register_script( 'localseo-metabox', false, [ 'wp-api-fetch' ], LOCALSEO_VERSION, true );
         wp_enqueue_script( 'localseo-metabox' );
         wp_add_inline_script( 'localseo-metabox', $this->get_metabox_script() );
     }
 
     /**
-     * Returns the inline JS for the metabox character-count bars.
+     * Returns the inline JS for the metabox character-count bars and AI generation.
      *
      * @return string
      */
@@ -76,6 +76,53 @@ class Meta_Box {
     }
     lseoBar("localseo_meta_title",       "lseo-title-bar", "lseo-title-count", 60);
     lseoBar("localseo_meta_description", "lseo-desc-bar",  "lseo-desc-count",  155);
+
+    var aiBtn = document.getElementById("lseo-generate-ai-btn");
+    if (aiBtn) {
+        aiBtn.addEventListener("click", function () {
+            var btn = this;
+            var postId = btn.getAttribute("data-post-id");
+            var original = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Generating\u2026";
+            wp.apiFetch({
+                path: "/localseo/v1/generate-ai-post/" + postId,
+                method: "POST",
+            }).then(function (data) {
+                var titleEl = document.getElementById("localseo_meta_title");
+                var descEl  = document.getElementById("localseo_meta_description");
+                var selEl   = document.getElementById("localseo_schema_type");
+                if (titleEl && data.meta_title) {
+                    titleEl.value = data.meta_title;
+                    titleEl.dispatchEvent(new Event("input"));
+                }
+                if (descEl && data.meta_description) {
+                    descEl.value = data.meta_description;
+                    descEl.dispatchEvent(new Event("input"));
+                }
+                if (selEl && data.schema_type) {
+                    var found = false;
+                    for (var i = 0; i < selEl.options.length; i++) {
+                        if (selEl.options[i].value === data.schema_type) {
+                            selEl.value = data.schema_type;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        console.warn("LocalSEO: AI suggested schema type \"" + data.schema_type + "\" is not in the dropdown.");
+                    }
+                }
+                btn.textContent = "Generated \u2713";
+                btn.disabled = false;
+                setTimeout(function () { btn.textContent = original; }, 3000);
+            }).catch(function (err) {
+                btn.textContent = (err && err.message) ? err.message : "Error \u2013 retry";
+                btn.disabled = false;
+                setTimeout(function () { btn.textContent = original; }, 4000);
+            });
+        });
+    }
 })();';
     }
 
@@ -199,6 +246,18 @@ class Meta_Box {
                     </td>
                 </tr>
             </table>
+            <?php if ( ! empty( get_option( 'localseo_api_key', '' ) ) ) : ?>
+            <p style="margin-top:10px;">
+                <button type="button" id="lseo-generate-ai-btn"
+                        data-post-id="<?php echo esc_attr( $post->ID ); ?>"
+                        class="button button-secondary">
+                    <?php esc_html_e( 'Generate AI SEO', 'localseo-booster' ); ?>
+                </button>
+                <span class="description" style="margin-left:8px;">
+                    <?php esc_html_e( 'Auto-fill meta title, description and schema type using AI.', 'localseo-booster' ); ?>
+                </span>
+            </p>
+            <?php endif; ?>
         </div>
         <?php
     }

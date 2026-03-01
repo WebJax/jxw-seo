@@ -345,6 +345,7 @@ const DataCenter = () => {
                 return isEditing ? (
                     <input
                         type="text"
+                        className="w-full px-2 py-1 border border-[#8c8f94] rounded-sm text-sm"
                         value={value}
                         onChange={e => {
                             const newValue = e.target.value;
@@ -367,8 +368,8 @@ const DataCenter = () => {
                         autoFocus
                     />
                 ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <div onClick={() => setEditingCell(`${rowId}-city`)} style={{ flex: 1, cursor: 'pointer' }}>
+                    <div className="flex items-center gap-1">
+                        <div onClick={() => setEditingCell(`${rowId}-city`)} className="flex-1 cursor-pointer">
                             {value || <em>{__('Klik for at redigere', 'localseo-booster')}</em>}
                         </div>
                         <Button
@@ -396,6 +397,7 @@ const DataCenter = () => {
                 return isEditing ? (
                     <input
                         type="text"
+                        className="w-full px-2 py-1 border border-[#8c8f94] rounded-sm text-sm"
                         value={value}
                         onChange={e => {
                             const newValue = e.target.value;
@@ -418,8 +420,8 @@ const DataCenter = () => {
                         autoFocus
                     />
                 ) : (
-                    <div onClick={() => setEditingCell(`${rowId}-zip`)}>
-                        {value || <em>{__('Click to edit', 'localseo-booster')}</em>}
+                    <div className="cursor-pointer min-h-[20px] break-words leading-normal" onClick={() => setEditingCell(`${rowId}-zip`)}>
+                        {value || <em className="text-[#8c8f94]">{__('Click to edit', 'localseo-booster')}</em>}
                     </div>
                 );
             },
@@ -435,6 +437,7 @@ const DataCenter = () => {
                 return isEditing ? (
                     <input
                         type="text"
+                        className="w-full px-2 py-1 border border-[#8c8f94] rounded-sm text-sm"
                         value={value}
                         onChange={e => {
                             const newValue = e.target.value;
@@ -457,8 +460,8 @@ const DataCenter = () => {
                         autoFocus
                     />
                 ) : (
-                    <div onClick={() => setEditingCell(`${rowId}-service_keyword`)}>
-                        {value || <em>{__('Click to edit', 'localseo-booster')}</em>}
+                    <div className="cursor-pointer min-h-[20px] break-words leading-normal" onClick={() => setEditingCell(`${rowId}-service_keyword`)}>
+                        {value || <em className="text-[#8c8f94]">{__('Click to edit', 'localseo-booster')}</em>}
                     </div>
                 );
             },
@@ -487,11 +490,11 @@ const DataCenter = () => {
                 const rowId = info.row.original.id;
                 const value = info.getValue();
                 return (
-                    <div className="cell-long-text">
-                        <div className="cell-preview">
+                    <div className="lseo-cell-text flex items-start gap-1.5">
+                        <div className="flex-1 min-w-0 text-[13px] leading-normal overflow-hidden break-words">
                             {value
                                 ? <span title={value}>{value.length > 80 ? value.substring(0, 80) + '...' : value}</span>
-                                : <em>{__('Ikke genereret', 'localseo-booster')}</em>
+                                : <em className="text-[#8c8f94]">{__('Ikke genereret', 'localseo-booster')}</em>
                             }
                         </div>
                         <Button
@@ -512,11 +515,11 @@ const DataCenter = () => {
                 const rowId = info.row.original.id;
                 const value = info.getValue();
                 return (
-                    <div className="cell-long-text">
-                        <div className="cell-preview">
+                    <div className="lseo-cell-text flex items-start gap-1.5">
+                        <div className="flex-1 min-w-0 text-[13px] leading-normal overflow-hidden break-words">
                             {value
                                 ? <span title={value}>{value}</span>
-                                : <em>{__('Ikke sat', 'localseo-booster')}</em>
+                                : <em className="text-[#8c8f94]">{__('Ikke sat', 'localseo-booster')}</em>
                             }
                         </div>
                         <Button
@@ -537,11 +540,11 @@ const DataCenter = () => {
                 const rowId = info.row.original.id;
                 const value = info.getValue();
                 return (
-                    <div className="cell-long-text">
-                        <div className="cell-preview">
+                    <div className="lseo-cell-text flex items-start gap-1.5">
+                        <div className="flex-1 min-w-0 text-[13px] leading-normal overflow-hidden break-words">
                             {value
                                 ? <span title={value}>{value.length > 80 ? value.substring(0, 80) + '...' : value}</span>
-                                : <em>{__('Ikke sat', 'localseo-booster')}</em>
+                                : <em className="text-[#8c8f94]">{__('Ikke sat', 'localseo-booster')}</em>
                             }
                         </div>
                         <Button
@@ -562,11 +565,11 @@ const DataCenter = () => {
                 const rowId = info.row.original.id;
                 const value = info.getValue();
                 return (
-                    <div className="cell-long-text">
-                        <div className="cell-preview">
+                    <div className="lseo-cell-text flex items-start gap-1.5">
+                        <div className="flex-1 min-w-0 text-[13px] leading-normal overflow-hidden break-words">
                             {value
                                 ? <span>{value}</span>
-                                : <em>{__('Ikke sat', 'localseo-booster')}</em>
+                                : <em className="text-[#8c8f94]">{__('Ikke sat', 'localseo-booster')}</em>
                             }
                         </div>
                         <Button
@@ -587,11 +590,11 @@ const DataCenter = () => {
                 const rowId = info.row.original.id;
                 const value = info.getValue();
                 return (
-                    <div className="cell-long-text">
-                        <div className="cell-preview">
+                    <div className="lseo-cell-text flex items-start gap-1.5">
+                        <div className="flex-1 min-w-0 text-[13px] leading-normal overflow-hidden break-words">
                             {value
                                 ? <span title={value}>{value.length > 60 ? value.substring(0, 60) + '...' : value}</span>
-                                : <em>{__('Ikke sat', 'localseo-booster')}</em>
+                                : <em className="text-[#8c8f94]">{__('Ikke sat', 'localseo-booster')}</em>
                             }
                         </div>
                         <Button
@@ -614,7 +617,7 @@ const DataCenter = () => {
                 const isGenerating = generatingAI.has(rowId);
 
                 return (
-                    <div className="action-buttons">
+                    <div className="flex gap-1.5 flex-wrap">
                         <Button
                             variant="secondary"
                             size="small"
@@ -646,7 +649,7 @@ const DataCenter = () => {
 
     if (loading && data.length === 0) {
         return (
-            <div className="localseo-loading">
+            <div className="flex flex-col items-center justify-center min-h-[300px]">
                 <Spinner />
                 <p>{__('Loading data...', 'localseo-booster')}</p>
             </div>
@@ -654,8 +657,8 @@ const DataCenter = () => {
     }
 
     return (
-        <div className="localseo-data-center">
-            <h1>{__('LocalSEO Datakenter', 'localseo-booster')}</h1>
+        <div className="my-5">
+            <h1 className="mb-5">{__('LocalSEO Datakenter', 'localseo-booster')}</h1>
             
             {error && (
                 <Notice status="error" isDismissible onRemove={() => setError(null)}>
@@ -679,26 +682,18 @@ const DataCenter = () => {
             {bulkProgress && (
                 <Notice status="info" isDismissible={false}>
                     <strong>{__('Bulk AI Generation in Progress...', 'localseo-booster')}</strong>
-                    <div style={{ marginTop: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <div className="mt-2.5">
+                        <div className="flex justify-between mb-1.5">
                             <span>{__('Processing:', 'localseo-booster')} {bulkProgress.current} / {bulkProgress.total}</span>
                             <span>{Math.round((bulkProgress.current / bulkProgress.total) * 100)}%</span>
                         </div>
-                        <div style={{ 
-                            width: '100%', 
-                            height: '20px', 
-                            backgroundColor: '#f0f0f0', 
-                            borderRadius: '4px',
-                            overflow: 'hidden'
-                        }}>
-                            <div style={{ 
-                                width: `${(bulkProgress.current / bulkProgress.total) * 100}%`, 
-                                height: '100%', 
-                                backgroundColor: '#2271b1',
-                                transition: 'width 0.3s ease'
-                            }} />
+                        <div className="w-full h-5 bg-[#f0f0f0] rounded overflow-hidden">
+                            <div
+                                className="h-full bg-[#2271b1] transition-[width] duration-300 ease-in-out"
+                                style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                            />
                         </div>
-                        <div style={{ marginTop: '5px', fontSize: '12px', color: '#666' }}>
+                        <div className="mt-1.5 text-xs text-[#666]">
                             {__('Success:', 'localseo-booster')} {bulkProgress.success} | {__('Failed:', 'localseo-booster')} {bulkProgress.failed}
                         </div>
                     </div>
@@ -718,7 +713,7 @@ const DataCenter = () => {
                             value={editModalValue}
                             onChange={setEditModalValue}
                             rows={8}
-                            style={{ width: '100%', fontSize: '14px' }}
+                            className="w-full text-sm"
                         />
                     ) : (
                         <TextControl
@@ -726,15 +721,15 @@ const DataCenter = () => {
                             hideLabelFromVision
                             value={editModalValue}
                             onChange={setEditModalValue}
-                            style={{ width: '100%', fontSize: '14px' }}
+                            className="w-full text-sm"
                         />
                     )}
                     {editModal.charLimit && (
-                        <p style={{ fontSize: '12px', color: editModalValue.length > editModal.charLimit ? '#cc1818' : '#8c8f94', marginTop: '4px' }}>
+                        <p className={`text-xs mt-1 ${editModalValue.length > editModal.charLimit ? 'text-[#cc1818]' : 'text-[#8c8f94]'}`}>
                             {editModalValue.length} / {editModal.charLimit} tegn
                         </p>
                     )}
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                    <div className="flex gap-2.5 mt-4">
                         <Button variant="primary" onClick={saveEditModal}>
                             {__('Gem', 'localseo-booster')}
                         </Button>
@@ -751,7 +746,7 @@ const DataCenter = () => {
                     onRequestClose={() => setDeleteConfirm(null)}
                 >
                     <p>{__('Er du sikker på, at du vil slette denne række?', 'localseo-booster')}</p>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                    <div className="flex gap-2.5 mt-5">
                         <Button variant="primary" isDestructive onClick={confirmDelete}>
                             {__('Slet', 'localseo-booster')}
                         </Button>
@@ -762,7 +757,7 @@ const DataCenter = () => {
                 </Modal>
             )}
 
-            <div className="toolbar">
+            <div className="flex gap-2.5 mb-5 flex-wrap">
                 <Button variant="primary" onClick={addRow} disabled={bulkProgress !== null}>
                     {__('Tilføj ny række', 'localseo-booster')}
                 </Button>
@@ -779,7 +774,7 @@ const DataCenter = () => {
                     type="file"
                     accept=".csv,text/csv"
                     ref={importFileRef}
-                    style={{ display: 'none' }}
+                    className="hidden"
                     onChange={handleImportFile}
                 />
                 <Button variant="tertiary" onClick={fetchData} disabled={bulkProgress !== null}>
@@ -787,14 +782,15 @@ const DataCenter = () => {
                 </Button>
             </div>
 
-            <div className="table-container">
-                <table className="localseo-table">
-                    <thead>
+            <div className="overflow-x-auto bg-white border border-[#ccc] rounded">
+                <table className="localseo-table w-full border-collapse table-auto">
+                    <thead className="bg-[#f0f0f1] sticky top-0 z-10">
                         {table.getHeaderGroups().map(headerGroup => (
                             <tr key={headerGroup.id}>
                                 {headerGroup.headers.map(header => (
                                     <th
                                         key={header.id}
+                                        className="px-2 py-3 text-left font-semibold border-b-2 border-[#ccc]"
                                         style={{ width: header.getSize() }}
                                     >
                                         {flexRender(
@@ -808,10 +804,11 @@ const DataCenter = () => {
                     </thead>
                     <tbody>
                         {table.getRowModel().rows.map(row => (
-                            <tr key={row.id}>
+                            <tr key={row.id} className="hover:bg-[#f9f9f9]">
                                 {row.getVisibleCells().map(cell => (
                                     <td
                                         key={cell.id}
+                                        className="p-2 border-b border-[#e0e0e0] align-top break-words"
                                         style={{ width: cell.column.getSize() }}
                                     >
                                         {flexRender(
@@ -827,8 +824,8 @@ const DataCenter = () => {
             </div>
 
             {data.length === 0 && (
-                <div className="empty-state">
-                    <p>{__('Ingen data endnu. Klik på "Tilføj ny række" for at komme i gang.', 'localseo-booster')}</p>
+                <div className="text-center p-10 text-[#8c8f94]">
+                    <p className="text-base">{__('Ingen data endnu. Klik på "Tilføj ny række" for at komme i gang.', 'localseo-booster')}</p>
                 </div>
             )}
         </div>

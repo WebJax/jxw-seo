@@ -66,6 +66,10 @@ class Admin {
 
     /**
      * Enqueue admin assets
+     *
+     * The admin UI is plain JavaScript (no build step).  It uses the
+     * WordPress-bundled globals exposed by the dependencies listed below
+     * (wp.element / React, wp.components, wp.i18n, wp.apiFetch).
      */
     public function enqueue_admin_assets( $hook ) {
         // Only load on our admin pages
@@ -73,42 +77,37 @@ class Admin {
             return;
         }
 
-        // Enqueue WordPress components styles
+        // WordPress bundled styles needed by our UI
         wp_enqueue_style( 'wp-components' );
 
-        // Enqueue our React app
-        $asset_file = LOCALSEO_PLUGIN_DIR . 'build/index.asset.php';
-        
-        if ( file_exists( $asset_file ) ) {
-            $asset = include $asset_file;
+        // Our plain-JS admin script – depends on WordPress-bundled packages
+        wp_enqueue_script(
+            'localseo-admin',
+            LOCALSEO_PLUGIN_URL . 'admin/js/data-center.js',
+            [ 'wp-element', 'wp-components', 'wp-i18n', 'wp-api-fetch' ],
+            LOCALSEO_VERSION,
+            true
+        );
 
-            wp_enqueue_script(
-                'localseo-admin',
-                LOCALSEO_PLUGIN_URL . 'build/index.js',
-                $asset['dependencies'],
-                $asset['version'],
-                true
-            );
+        // Our plain CSS (replaces the Tailwind-compiled build/index.css)
+        wp_enqueue_style(
+            'localseo-admin',
+            LOCALSEO_PLUGIN_URL . 'admin/css/admin.css',
+            [ 'wp-components' ],
+            LOCALSEO_VERSION
+        );
 
-            wp_enqueue_style(
-                'localseo-admin',
-                LOCALSEO_PLUGIN_URL . 'build/index.css',
-                [ 'wp-components' ],
-                $asset['version']
-            );
-
-            // Localize script with data
-            wp_localize_script( 'localseo-admin', 'localSEOData', [
-                'apiUrl' => rest_url( 'localseo/v1' ),
-                'nonce' => wp_create_nonce( 'wp_rest' ),
-                'exportUrl' => wp_nonce_url( admin_url( 'admin-post.php?action=localseo_export_csv' ), 'localseo_export_csv' ),
-                'settings' => [
-                    'hasApiKey' => ! empty( get_option( 'localseo_api_key', '' ) ),
-                    'apiProvider' => get_option( 'localseo_api_provider', 'openai' ),
-                    'systemPrompt' => get_option( 'localseo_system_prompt', '' ),
-                ]
-            ]);
-        }
+        // Localize script with data
+        wp_localize_script( 'localseo-admin', 'localSEOData', [
+            'apiUrl'    => rest_url( 'localseo/v1' ),
+            'nonce'     => wp_create_nonce( 'wp_rest' ),
+            'exportUrl' => wp_nonce_url( admin_url( 'admin-post.php?action=localseo_export_csv' ), 'localseo_export_csv' ),
+            'settings'  => [
+                'hasApiKey'    => ! empty( get_option( 'localseo_api_key', '' ) ),
+                'apiProvider'  => get_option( 'localseo_api_provider', 'openai' ),
+                'systemPrompt' => get_option( 'localseo_system_prompt', '' ),
+            ],
+        ] );
     }
 
     /**

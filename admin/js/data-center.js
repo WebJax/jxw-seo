@@ -32,6 +32,9 @@
     const { __, sprintf } = wp.i18n;
     const apiFetch = wp.apiFetch;
 
+    /* Configure wp.apiFetch to send the REST nonce with every request */
+    apiFetch.use( apiFetch.createNonceMiddleware( localSEOData.nonce ) );
+
     /* ── Helpers ───────────────────────────────────────────────────── */
 
     /**
@@ -172,15 +175,34 @@
                     path: `/localseo/v1/lookup-city?city=${ encodeURIComponent( cityName ) }`,
                 } );
                 const updates = {};
-                if ( result.zip )          updates.zip          = result.zip;
+                if ( result.zip )           updates.zip           = result.zip;
                 if ( result.nearby_cities ) updates.nearby_cities = result.nearby_cities;
                 if ( result.city )          updates.city          = result.city;
 
-                for ( const [ field, val ] of Object.entries( updates ) ) {
-                    await updateCell( rowId, field, val );
+                if ( Object.keys( updates ).length > 0 ) {
+                    await apiFetch( {
+                        path: `/localseo/v1/data/${ rowId }`,
+                        method: 'PUT',
+                        data: updates,
+                    } );
+                    setData( prevData =>
+                        prevData.map( row => row.id === rowId ? { ...row, ...updates } : row )
+                    );
                 }
+
+                const nearbyCitiesString = typeof result.nearby_cities === 'string' ? result.nearby_cities : '';
+                const nearbyCitiesCount  = nearbyCitiesString
+                    .split( ',' )
+                    .map( c => c.trim() )
+                    .filter( c => c.length > 0 ).length;
                 setSuccess(
-                    `Fandt postnummer ${ result.zip } for ${ result.city } og ${ result.nearby_cities.split( ',' ).length } nærliggende byer.`
+                    sprintf(
+                        /* translators: 1: ZIP/postcode, 2: city name, 3: number of nearby cities */
+                        __( 'Fandt postnummer %1$s for %2$s og %3$d nærliggende byer.', 'localseo-booster' ),
+                        result.zip,
+                        result.city,
+                        nearbyCitiesCount
+                    )
                 );
             } catch ( err ) {
                 setError( err.message );
@@ -332,6 +354,7 @@
                             autoFocus: true,
                         } );
                     }
+                    const dawaLabel = __( 'Slå postnummer og nabobyer op automatisk (DAWA)', 'localseo-booster' );
                     return el( 'div', { className: 'lseo-city-cell' },
                         el( 'div', {
                             className: 'lseo-city-name',
@@ -342,7 +365,8 @@
                             size: 'small',
                             onClick: () => lookupCity( rowId, value ),
                             disabled: lookingUpCity.has( rowId ),
-                            title: 'Slå postnummer og nabobyer op automatisk (DAWA)',
+                            title: dawaLabel,
+                            'aria-label': dawaLabel,
                             style: { flexShrink: 0, padding: '2px 5px', minHeight: 'unset' },
                         }, lookingUpCity.has( rowId ) ? el( Spinner, null ) : '🔍' )
                     );
@@ -419,7 +443,9 @@
                 cell: ( row ) => {
                     const service = toSlug( row.service_keyword );
                     const city    = toSlug( row.city );
-                    const url     = service && city ? `/service/${ service }/${ city }/` : null;
+                    const url     = service && city
+                        ? localSEOData.homeUrl.replace( /\/$/, '' ) + `/service/${ service }/${ city }/`
+                        : null;
                     return url
                         ? el( 'a', { href: url, target: '_blank', rel: 'noopener noreferrer' },
                             `${ service }/${ city }`
@@ -446,6 +472,7 @@
                             variant: 'tertiary',
                             size: 'small',
                             onClick: () => openEditModal( rowId, 'ai_generated_intro', __( 'AI Introduktion', 'localseo-booster' ), value, true ),
+                            'aria-label': __( 'Rediger AI Introduktion', 'localseo-booster' ),
                         }, '✏️' )
                     );
                 },
@@ -467,6 +494,7 @@
                             variant: 'tertiary',
                             size: 'small',
                             onClick: () => openEditModal( rowId, 'meta_title', __( 'Meta Titel', 'localseo-booster' ), value, false, 60 ),
+                            'aria-label': __( 'Rediger Meta Titel', 'localseo-booster' ),
                         }, '✏️' )
                     );
                 },
@@ -490,6 +518,7 @@
                             variant: 'tertiary',
                             size: 'small',
                             onClick: () => openEditModal( rowId, 'meta_description', __( 'Meta Beskrivelse', 'localseo-booster' ), value, true, 155 ),
+                            'aria-label': __( 'Rediger Meta Beskrivelse', 'localseo-booster' ),
                         }, '✏️' )
                     );
                 },
@@ -511,6 +540,7 @@
                             variant: 'tertiary',
                             size: 'small',
                             onClick: () => openEditModal( rowId, 'nearby_cities', __( 'Nærliggende byer', 'localseo-booster' ), value, false ),
+                            'aria-label': __( 'Rediger Nærliggende byer', 'localseo-booster' ),
                         }, '✏️' )
                     );
                 },
@@ -534,6 +564,7 @@
                             variant: 'tertiary',
                             size: 'small',
                             onClick: () => openEditModal( rowId, 'local_landmarks', __( 'Lokale seværdigheder', 'localseo-booster' ), value, true ),
+                            'aria-label': __( 'Rediger Lokale seværdigheder', 'localseo-booster' ),
                         }, '✏️' )
                     );
                 },
@@ -561,7 +592,7 @@
                     );
                 },
             },
-        ], [ editingCell, generatingAI, lookingUpCity, data ] );
+        ], [ editingCell, generatingAI, lookingUpCity ] );
 
         /* ── Loading state ──────────────────────────────────────────── */
         if ( loading && data.length === 0 ) {
@@ -595,8 +626,8 @@
                 onRemove: () => setRateLimitCountdown( null ),
             },
                 el( Fragment, null,
-                    el( 'strong', null, '⏳ AI-kvoten er midlertidigt opbrugt.' ),
-                    ' Prøv igen om ',
+                    el( 'strong', null, __( '⏳ AI-kvoten er midlertidigt opbrugt.', 'localseo-booster' ) ),
+                    __( ' Prøv igen om ', 'localseo-booster' ),
                     el( 'strong', { style: { fontVariantNumeric: 'tabular-nums' } }, formatCountdown( rateLimitCountdown ) )
                 )
             ),

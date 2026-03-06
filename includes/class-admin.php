@@ -99,8 +99,8 @@ class Admin {
 
         // Localize script with data
         wp_localize_script( 'localseo-admin', 'localSEOData', [
-            'apiUrl'    => rest_url( 'localseo/v1' ),
             'nonce'     => wp_create_nonce( 'wp_rest' ),
+            'homeUrl'   => home_url( '/' ),
             'exportUrl' => wp_nonce_url( admin_url( 'admin-post.php?action=localseo_export_csv' ), 'localseo_export_csv' ),
             'settings'  => [
                 'hasApiKey'    => ! empty( get_option( 'localseo_api_key', '' ) ),
